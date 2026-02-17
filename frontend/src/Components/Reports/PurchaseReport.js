@@ -143,10 +143,9 @@ function PurchaseReport() {
       );
 
       const data = await res.json();
-      console.log('data',data)
 
       setRows(data.results || []);
-      setTotalPurchase(data.summary?.totalPurchase || 0);
+      setTotalPurchase(data.total_brass);
     } catch (err) {
       console.error("Purchase report error", err);
     } finally {
@@ -267,7 +266,7 @@ function PurchaseReport() {
       <Card sx={{ p: 2, mb: 3, maxWidth: 420 }}>
         <Typography>Total Purchase</Typography>
         <Typography variant="h5" fontWeight={700} color="error.main">
-          ₹ {totalPurchase.toLocaleString("en-IN")}
+          {totalPurchase}
         </Typography>
         <Typography variant="body2" mt={1}>
           Entries: {rows.length}
@@ -296,13 +295,13 @@ function PurchaseReport() {
               <TableRow>
                 {[
                   "Date",
-                  "Bill No",
-                  "Supplier",
-                  "Village",
-                  "Item",
-                  "Brass",
-                  "Amount",
-                  "MR Name",
+                //   "Bill No",
+                //   "Supplier",
+                //   "Village",
+                  "Vehicle No",
+                  "Quantity",
+                //   "Amount",
+                //   "MR Name",
                 ].map(h => (
                   <TableCell key={h}><b>{h}</b></TableCell>
                 ))}
@@ -313,13 +312,13 @@ function PurchaseReport() {
               {rows.map((r, i) => (
                 <TableRow key={i}>
                   <TableCell>{r.date}</TableCell>
-                  <TableCell>{r.billNo}</TableCell>
-                  <TableCell>{r.supplierName}</TableCell>
-                  <TableCell>{r.village}</TableCell>
-                  <TableCell>{r.item}</TableCell>
+                  {/* <TableCell>{r.billNo}</TableCell> */}
+                  {/* <TableCell>{r.supplierName}</TableCell> */}
+                  {/* <TableCell>{r.village}</TableCell> */}
+                  <TableCell>{r.vehicle_number}</TableCell>
                   <TableCell>{r.brass}</TableCell>
-                  <TableCell>₹ {r.amount.toLocaleString("en-IN")}</TableCell>
-                  <TableCell>{r.mrName}</TableCell>
+                  {/* <TableCell>₹ {r.amount.toLocaleString("en-IN")}</TableCell> */}
+                  {/* <TableCell>{r.mrName}</TableCell> */}
                 </TableRow>
               ))}
             </TableBody>

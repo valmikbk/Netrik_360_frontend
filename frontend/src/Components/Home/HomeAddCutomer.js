@@ -11,14 +11,20 @@ import {
   Alert,
 } from "@mui/material";
 import axios from "axios";
+import Header from "../Header/Header";
+import { useNavigate } from "react-router-dom";
 
-function AddCustomer() {
+
+function HomeAddCutomer() {
+
+    const navigate = useNavigate();
+
   const [form, setForm] = useState({
     customerName: "",
     address: "",
     phone: "",
     gstin: "",
-    mrName: "",
+    // mrName: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -43,44 +49,55 @@ function AddCustomer() {
   };
 
   const handleSubmit = async () => {
+  // Basic validation
   if (!form.customerName || !form.phone || !form.address) {
-    alert("Please fill all required fields");
+    setToast({
+      open: true,
+      message: "Please fill all required fields",
+      severity: "error",
+    });
     return;
   }
 
-  setLoading(true);
-
   try {
-    const response = await fetch(
+    setLoading(true);
+
+    const payload = {
+      name: form.customerName,
+      contact: form.phone,
+      address: form.address,
+      gstin: form.gstin || null,
+    //   mr_name: form.mrName,
+    };
+
+    const res = await axios.post(
       "http://localhost:8000/api/customers/create/",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: form.customerName,
-          contact: form.phone,
-          address: form.address,
-          gstin: form.gstin || null,
-        }),
-      }
+      payload
     );
 
-    const data = await response.json();
+    setToast({
+      open: true,
+      message: res.data.message || "Customer created successfully",
+      severity: "success",
+    });
 
-    if (!response.ok) {
-      console.error("API Error:", data);
-      alert(data.message || "Failed to add customer");
-      return;
-    }
-
-    alert("Customer added successfully✅");
     handleReset();
 
+    // ✅ REDIRECT TO INVOICE PAGE AFTER SUCCESS
+    setTimeout(() => {
+      navigate("/invoice-generation");   // 🔁 change route if needed
+    }, 800);
+
   } catch (error) {
-    console.error("Network Error:", error);
-    alert("Server error. Please try again.");
+    console.error(error);
+
+    setToast({
+      open: true,
+      message:
+        error?.response?.data?.message ||
+        "Failed to create customer",
+      severity: "error",
+    });
   } finally {
     setLoading(false);
   }
@@ -88,7 +105,8 @@ function AddCustomer() {
 
 
   return (
-    <>
+    <Box sx={{ minHeight: "100vh", py: 4, backgroundColor: "#f5f5f5" }}>
+    <Header />
       <Card
         sx={{
           maxWidth: 900,
@@ -199,26 +217,20 @@ function AddCustomer() {
 
       {/* Toast */}
       <Snackbar
-  open={toast.open}
-  autoHideDuration={3000}
-  onClose={() => setToast({ ...toast, open: false })}
-  anchorOrigin={{ vertical: "top", horizontal: "right" }}
-  sx={{
-    zIndex: (theme) => theme.zIndex.modal + 1,
-  mt: 8,  
-  }}
->
-  <Alert
-    severity={toast.severity}
-    onClose={() => setToast({ ...toast, open: false })}
-    sx={{ width: "100%" }}
-  >
-    {toast.message}
-  </Alert>
-</Snackbar>
-
-    </>
+        open={toast.open}
+        autoHideDuration={3000}
+        onClose={() => setToast({ ...toast, open: false })}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          severity={toast.severity}
+          onClose={() => setToast({ ...toast, open: false })}
+        >
+          {toast.message}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 }
 
-export default AddCustomer;
+export default HomeAddCutomer;

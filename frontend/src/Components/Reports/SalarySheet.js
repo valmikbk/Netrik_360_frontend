@@ -19,11 +19,9 @@ import {
 
 import SearchIcon from "@mui/icons-material/Search";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
-import PrintIcon from "@mui/icons-material/Print";
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import logo from "../Logo/Meghana_stone_logo.png";
 
 /* ---------------- DATE FORMAT ---------------- */
 const formatDate = (date) => {
@@ -33,94 +31,58 @@ const formatDate = (date) => {
   return `${y}-${m}-${d}`;
 };
 
-/* ---------------- IMAGE TO BASE64 ---------------- */
-const loadImageAsBase64 = (src) =>
-  new Promise((resolve) => {
-    const img = new Image();
-    img.src = src;
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      canvas.getContext("2d").drawImage(img, 0, 0);
-      resolve(canvas.toDataURL("image/png"));
-    };
-  });
-
-/* ---------------- PDF ---------------- */
-const generateSalaryPDF = async ({ rows, fromDate, toDate, summary }) => {
-  const doc = new jsPDF("p", "mm", "a4");
-  const primary = [41, 98, 255];
-  const logoBase64 = await loadImageAsBase64(logo);
-
-  doc.setFillColor(...primary);
-  doc.rect(0, 0, 210, 28, "F");
-  doc.addImage(logoBase64, "PNG", 14, 6, 20, 16);
-
-  doc.setTextColor(255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.text("SALARY SHEET REPORT", 60, 18);
-
-  doc.setTextColor(0);
-  doc.setFontSize(10);
-  doc.text(`From : ${fromDate}`, 14, 44);
-  doc.text(`To : ${toDate}`, 80, 44);
-
-  autoTable(doc, {
-    startY: 52,
-    head: [["Sr No", "Employee", "Salary", "Days", "Amount"]],
-    body: rows.map((r, i) => [
-      i + 1,
-      r.employee_name,
-      r.salary,
-      r.working_days,
-      r.salary_amount,
-    ]),
-    theme: "grid",
-    headStyles: { fillColor: primary, textColor: 255 },
-  });
-
-  doc.text(
-    `Total Salary Paid : ₹ ${summary.total_salary}`,
-    14,
-    doc.lastAutoTable.finalY + 10
-  );
-
-  return doc;
-};
-
 function SalarySheet() {
+  const today = new Date();
+
+  /* ---------------- STATES ---------------- */
   const [rows, setRows] = useState([]);
   const [summary, setSummary] = useState({
     total_salary: 0,
-    employees: 0,
+    employee_count: 0,
   });
 
   const [search, setSearch] = useState("");
   const [period, setPeriod] = useState("This Month");
 
-  const now = new Date();
   const [fromDate, setFromDate] = useState(
-    formatDate(new Date(now.getFullYear(), now.getMonth(), 1))
+    formatDate(new Date(today.getFullYear(), today.getMonth(), 1))
   );
+
   const [toDate, setToDate] = useState(
-    formatDate(new Date(now.getFullYear(), now.getMonth() + 1, 0))
+    formatDate(new Date(today.getFullYear(), today.getMonth() + 1, 0))
   );
 
-  /* ---------------- PERIOD HANDLER ---------------- */
+  /* ---------------- PERIOD SYNC ---------------- */
   useEffect(() => {
-    const today = new Date();
+    const now = new Date();
 
-    if (period === "This Month") {
-      setFromDate(formatDate(new Date(today.getFullYear(), today.getMonth(), 1)));
-      setToDate(formatDate(new Date(today.getFullYear(), today.getMonth() + 1, 0)));
+    if (period === "Today") {
+      const d = formatDate(now);
+      setFromDate(d);
+      setToDate(d);
     }
 
-    if (period === "Last Month") {
-      setFromDate(formatDate(new Date(today.getFullYear(), today.getMonth() - 1, 1)));
-      setToDate(formatDate(new Date(today.getFullYear(), today.getMonth(), 0)));
+    else if (period === "This Week") {
+      const firstDay = new Date(now);
+      firstDay.setDate(now.getDate() - now.getDay());
+
+      const lastDay = new Date(firstDay);
+      lastDay.setDate(firstDay.getDate() + 6);
+
+      setFromDate(formatDate(firstDay));
+      setToDate(formatDate(lastDay));
     }
+
+    else if (period === "This Month") {
+      setFromDate(formatDate(new Date(now.getFullYear(), now.getMonth(), 1)));
+      setToDate(formatDate(new Date(now.getFullYear(), now.getMonth() + 1, 0)));
+    }
+
+    else if (period === "Last Month") {
+      setFromDate(formatDate(new Date(now.getFullYear(), now.getMonth() - 1, 1)));
+      setToDate(formatDate(new Date(now.getFullYear(), now.getMonth(), 0)));
+    }
+
   }, [period]);
 
   /* ---------------- FETCH ---------------- */
@@ -136,8 +98,9 @@ function SalarySheet() {
     );
 
     const data = await res.json();
+
     setRows(data.results || []);
-    setSummary(data.summary || { total_salary: 0, employees: 0 });
+    setSummary(data.summary || {});
   };
 
   useEffect(() => {
@@ -146,24 +109,36 @@ function SalarySheet() {
 
   /* ---------------- PDF ---------------- */
   const handleDownload = async () => {
-    const doc = await generateSalaryPDF({
-      rows,
-      fromDate,
-      toDate,
-      summary,
+    const doc = new jsPDF("p", "mm", "a4");
+
+    doc.setFontSize(16);
+    doc.text("SALARY SHEET REPORT", 14, 20);
+
+    autoTable(doc, {
+      startY: 30,
+      head: [["Sr No", "Employee", "Salary", "Days", "Amount"]],
+      body: rows.map((r, i) => [
+        i + 1,
+        r.employee_name,
+        r.salary,
+        r.working_days,
+        r.salary_amount,
+      ]),
     });
+
     doc.save("salary_sheet.pdf");
   };
 
   return (
-    <Box p={2}>
+    <Box p={3}>
       <Typography variant="h5" fontWeight={700} mb={2}>
         Salary Sheet
       </Typography>
 
-      {/* FILTERS */}
+      {/* ---------------- FILTERS ---------------- */}
       <Card sx={{ p: 2, mb: 2 }}>
         <Box display="flex" gap={2} flexWrap="wrap">
+
           <TextField
             label="Search Employee"
             size="small"
@@ -185,24 +160,46 @@ function SalarySheet() {
             value={period}
             onChange={(e) => setPeriod(e.target.value)}
           >
+            <MenuItem value="Today">Today</MenuItem>
+            <MenuItem value="This Week">This Week</MenuItem>
             <MenuItem value="This Month">This Month</MenuItem>
             <MenuItem value="Last Month">Last Month</MenuItem>
           </TextField>
+
+          {/* Always Visible Date Range */}
+          <TextField
+            label="From Date"
+            type="date"
+            size="small"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
+
+          <TextField
+            label="To Date"
+            type="date"
+            size="small"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
+
         </Box>
       </Card>
 
-      {/* SUMMARY */}
+      {/* ---------------- SUMMARY ---------------- */}
       <Card sx={{ p: 2, mb: 3, maxWidth: 420 }}>
         <Typography>Total Salary Paid</Typography>
         <Typography variant="h5" fontWeight={700} color="error.main">
-          ₹ {summary.total_salary}
+          ₹ {summary.total_salary || 0}
         </Typography>
         <Typography variant="body2">
-          Employees: {summary.employees}
+          Employees: {summary.employee_count || 0}
         </Typography>
       </Card>
 
-      {/* TABLE */}
+      {/* ---------------- TABLE ---------------- */}
       <Card sx={{ p: 2 }}>
         <Box display="flex" justifyContent="space-between" mb={1}>
           <Typography variant="h6">Salary Details</Typography>

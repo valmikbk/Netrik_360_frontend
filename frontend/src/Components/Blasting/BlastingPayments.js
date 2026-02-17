@@ -53,6 +53,39 @@ function BlastingPayments() {
 
     const handleSave = async () => {
         try {
+
+            const missingFields = [];
+
+            if (!form.partyId) missingFields.push("Supplier");
+            if (!form.date) missingFields.push("Date");
+
+            if (!form.paidAmount || isNaN(form.paidAmount) || Number(form.paidAmount) <= 0) {
+                missingFields.push("Valid Paid Amount");
+            }
+
+            if (missingFields.length > 0) {
+                alert("Missing Fields: " + missingFields.join(", "));
+                return;
+            }
+
+            // 🔴 BLOCK IF TOTAL BLASTING IS ZERO
+        if (!outstanding || Number(outstanding.total_blasting) <= 0) {
+            alert("Payment not allowed. Total blasting amount is zero.");
+            return;
+        }
+
+        // 🔴 BLOCK IF NO OUTSTANDING
+        if (Number(outstanding.outstanding) <= 0) {
+            alert("No outstanding amount for this supplier.");
+            return;
+        }
+
+        // 🔴 BLOCK IF PAYMENT > OUTSTANDING
+        if (Number(form.paidAmount) > Number(outstanding.outstanding)) {
+            alert("Payment amount cannot exceed outstanding balance.");
+            return;
+        }
+
             const payload = {
                 supplier: form.partyId,
                 paid_amount: Number(form.paidAmount),
@@ -83,7 +116,12 @@ function BlastingPayments() {
             });
 
             alert("Blasting payment saved successfully");
-
+            setForm({
+                partyId: "",
+                date: new Date().toISOString().split("T")[0],
+                paidAmount: "",
+            });
+            setOutstanding(null);
         } catch (error) {
             console.error("Payment error:", error);
         }

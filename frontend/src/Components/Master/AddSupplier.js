@@ -40,8 +40,8 @@ function AddSupplier() {
     setError("");
     setSuccess("");
 
-    if (!form.supplierName || !form.phone) {
-      setError("Supplier name and phone are required");
+    if (!form.supplierName || !form.address || !form.phone) {
+      setError("Supplier name, address, and phone are required");
       return;
     }
 
@@ -76,7 +76,8 @@ function AddSupplier() {
         return;
       }
 
-      setSuccess("Supplier added successfully ✅");
+    //   setSuccess("Supplier added successfully ✅");
+    alert("Supplier added successfully ✅");
       handleReset();
     } catch (err) {
       setError("Server error. Please try again.");
@@ -127,7 +128,7 @@ function AddSupplier() {
           />
 
           <TextField
-            label="Address"
+            label="Address *"
             name="address"
             value={form.address}
             onChange={handleChange}

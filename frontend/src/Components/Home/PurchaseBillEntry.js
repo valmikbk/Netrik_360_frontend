@@ -21,6 +21,10 @@ function PurchaseBillEntry() {
   const [villages, setVillages] = useState([]);
   const [selectedVillegeId, setSelectedVillegeId] = useState("");
 
+  const [vehicles, setVehicles] = useState([]);
+  const [selectedVehicleId, setSelectedVehicleId] = useState("");
+
+
   const [mrs, setMrs] = useState([]);
   const [selectedMrId, setSelectedMrId] = useState("");
 
@@ -29,7 +33,7 @@ function PurchaseBillEntry() {
     billNo: "",
     supplierName: "",
     village: "",
-    item: "",
+    vehicleNo: "",
     brass: "",
     amount: "",
     mrName: "",
@@ -51,6 +55,10 @@ function PurchaseBillEntry() {
       .then(res => res.json())
       .then(data => setMrs(data))
       .catch(err => console.error(err));
+    fetch("http://localhost:8000/api/vehicles/")
+      .then(res => res.json())
+      .then(data => setVehicles(data))
+      .catch(err => console.error("Vehicle fetch error", err));
   }, []);
 
   const handleChange = (e) => {
@@ -63,7 +71,7 @@ function PurchaseBillEntry() {
 
   const handleSave = async () => {
     try {
-      if (!selectedSupplierId || !form.billNo) {
+      if (!form.date || !selectedVehicleId || !form.brass) {
         alert("Please fill required fields");
         return;
       }
@@ -73,15 +81,17 @@ function PurchaseBillEntry() {
       formData.append("bill_number", form.billNo);
       formData.append("supplier", selectedSupplierId); // UUID
       formData.append("village", selectedVillegeId);   // UUID
+      formData.append("vehicle", selectedVehicleId);   // UUID
       formData.append("material", form.item); // UUID
       formData.append("quantity", form.brass);
       formData.append("amount", form.amount);
-      formData.append("mr", selectedMrId);              // UUID
+      formData.append("mr", selectedMrId);
+      formData.append("is_active", true);              // UUID
       // formData.append("bill_doc", form.billFile);// UUID
 
       if (form.billFile) {
-      formData.append("bill_doc", form.billFile);        // FILE ✅
-    }
+        formData.append("bill_doc", form.billFile);        // FILE ✅
+      }
 
       const res = await fetch("http://localhost:8000/api/purchase/create/", {
         method: "POST",
@@ -152,7 +162,7 @@ function PurchaseBillEntry() {
           }}
         >
           <Typography variant="h6" fontWeight={700}>
-            PURCHASE BILL ENTRY
+            RAW MATERIAL ENTRY
           </Typography>
           <IconButton onClick={() => navigate(-1)}>
             <CloseIcon sx={{ color: "#fff" }} />
@@ -161,7 +171,7 @@ function PurchaseBillEntry() {
 
         {/* FORM */}
         <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 2 }}>
-          <TextField
+          {/* <TextField
             label="Supplier Name"
             required
             select
@@ -174,7 +184,7 @@ function PurchaseBillEntry() {
                 {s.name}
               </MenuItem>
             ))}
-          </TextField>
+          </TextField> */}
 
           <TextField
             label="Date"
@@ -186,15 +196,15 @@ function PurchaseBillEntry() {
             required
           />
 
-          <TextField
+          {/* <TextField
             label="Bill No"
             name="billNo"
             value={form.billNo}
             onChange={handleChange}
             required
-          />
+          /> */}
 
-          <TextField
+          {/* <TextField
             label="Villege"
             required
             select
@@ -207,18 +217,40 @@ function PurchaseBillEntry() {
                 {s.name}
               </MenuItem>
             ))}
+          </TextField> */}
+
+          <TextField
+            select
+            fullWidth
+            label="Vehicle No"
+            value={selectedVehicleId}
+            onChange={(e) => {
+              const id = e.target.value;
+              const vehicle = vehicles.find(v => v.id === id);
+
+              setSelectedVehicleId(id);
+
+              setForm(prev => ({
+                ...prev,
+                vehicleNo: vehicle?.vehicle_number || "",
+              }));
+            }}
+            required
+          >
+            <MenuItem value="">
+              <em>Select Vehicle</em>
+            </MenuItem>
+
+            {vehicles.map((v) => (
+              <MenuItem key={v.id} value={v.id}>
+                {v.vehicle_number}
+              </MenuItem>
+            ))}
           </TextField>
 
-          <TextField
-            label="Item"
-            name="item"
-            value={form.item}
-            onChange={handleChange}
-            required
-          />
 
           <TextField
-            label="Brass"
+            label="Quantity"
             name="brass"
             value={form.brass}
             onChange={handleChange}
@@ -226,16 +258,16 @@ function PurchaseBillEntry() {
             required
           />
 
-          <TextField
+          {/* <TextField
             label="Amount"
             name="amount"
             value={form.amount}
             onChange={handleChange}
             type="number"
             required
-          />
+          /> */}
 
-          <TextField
+          {/* <TextField
             label="Mr Name"
             required
             select
@@ -248,7 +280,7 @@ function PurchaseBillEntry() {
                 {s.name}
               </MenuItem>
             ))}
-          </TextField>
+          </TextField> */}
 
           <Button
             variant="outlined"

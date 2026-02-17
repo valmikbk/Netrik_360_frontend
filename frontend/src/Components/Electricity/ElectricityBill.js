@@ -29,11 +29,35 @@ function Electricity() {
   };
 
   const handleSave = async () => {
+
+    const missingFields = [];
+
+  // 🔍 Required field checks
+  if (!form.date) missingFields.push("Date");
+
+  if (!form.billNumber || form.billNumber.trim() === "") {
+    missingFields.push("Bill Number");
+  }
+
+  if (
+    !form.billAmount ||
+    isNaN(form.billAmount) ||
+    Number(form.billAmount) <= 0
+  ) {
+    missingFields.push("Valid Bill Amount");
+  }
+
+  if (missingFields.length > 0) {
+    alert("Missing Fields: " + missingFields.join(", "));
+    return;
+  }
+
+
     const formData = new FormData();
     formData.append("date", form.date);
     formData.append("bill_number", form.billNumber);
     formData.append("amount", form.billAmount);
-    formData.append("date", form.date);
+    // formData.append("date", form.date);
 
     if (form.billFile) {
       formData.append("bill_doc", form.billFile);

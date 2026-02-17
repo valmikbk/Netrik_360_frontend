@@ -17,9 +17,11 @@ import {
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-function AllStocks() {
+function SalesSheet() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const allowedItems = ["20MM", "40MM", "ALL MIX", "M SAND", "DUST"];
 
   /* ---------------- FETCH STOCK DATA ---------------- */
   useEffect(() => {
@@ -35,6 +37,14 @@ function AllStocks() {
       });
   }, []);
 
+  /* ---------------- FILTER + ABSOLUTE ---------------- */
+  const filteredRows = rows
+    .filter((r) => allowedItems.includes(r.item))
+    .map((r) => ({
+      ...r,
+      stock: Math.abs(Number(r.stock)),
+    }));
+
   /* ---------------- PDF DOWNLOAD ---------------- */
   const handleDownloadPDF = () => {
     const doc = new jsPDF("p", "mm", "a4");
@@ -46,7 +56,7 @@ function AllStocks() {
     autoTable(doc, {
       startY: 30,
       head: [["Item Name", "Total Stock"]],
-      body: rows.map((r) => [
+      body: filteredRows.map((r) => [
         r.item,
         Number(r.stock).toFixed(2),
       ]),
@@ -66,12 +76,6 @@ function AllStocks() {
       bodyStyles: {
         lineWidth: 0.5,
         lineColor: 0,
-      },
-      columnStyles: {
-        1: {
-          textColor: (data) =>
-            parseFloat(data.cell.raw) < 0 ? [200, 0, 0] : [0, 0, 0],
-        },
       },
     });
 
@@ -107,10 +111,6 @@ function AllStocks() {
             th {
               font-weight: bold;
             }
-            .negative {
-              color: red;
-              font-weight: bold;
-            }
           </style>
         </head>
         <body>
@@ -123,14 +123,12 @@ function AllStocks() {
               </tr>
             </thead>
             <tbody>
-              ${rows
+              ${filteredRows
                 .map(
                   (r) => `
                 <tr>
                   <td>${r.item}</td>
-                  <td class="${r.stock < 0 ? "negative" : ""}">
-                    ${Number(r.stock).toFixed(2)}
-                  </td>
+                  <td>${Number(r.stock).toFixed(2)}</td>
                 </tr>
               `
                 )
@@ -153,14 +151,14 @@ function AllStocks() {
         <Button
           variant="outlined"
           onClick={handlePrint}
-          disabled={rows.length === 0}
+          disabled={filteredRows.length === 0}
         >
           Print
         </Button>
         <Button
           variant="contained"
           onClick={handleDownloadPDF}
-          disabled={rows.length === 0}
+          disabled={filteredRows.length === 0}
         >
           Download PDF
         </Button>
@@ -173,7 +171,7 @@ function AllStocks() {
         textAlign="center"
         mb={3}
       >
-        ALL STOCK REPORT
+        SHALES SHEET
       </Typography>
 
       {/* LOADING */}
@@ -184,14 +182,14 @@ function AllStocks() {
       )}
 
       {/* EMPTY STATE */}
-      {!loading && rows.length === 0 && (
+      {!loading && filteredRows.length === 0 && (
         <Typography textAlign="center" color="text.secondary">
           No stock data available
         </Typography>
       )}
 
       {/* TABLE */}
-      {!loading && rows.length > 0 && (
+      {!loading && filteredRows.length > 0 && (
         <TableContainer
           component={Paper}
           elevation={0}
@@ -226,7 +224,7 @@ function AllStocks() {
             </TableHead>
 
             <TableBody>
-              {rows.map((row, index) => (
+              {filteredRows.map((row, index) => (
                 <TableRow key={index}>
                   <TableCell
                     sx={{
@@ -240,11 +238,6 @@ function AllStocks() {
                     sx={{
                       border: "1px solid #000",
                       textAlign: "center",
-                      color:
-                        Number(row.stock) < 0
-                          ? "error.main"
-                          : "text.primary",
-                      fontWeight: Number(row.stock) < 0 ? 600 : 400,
                     }}
                   >
                     {Number(row.stock).toFixed(2)}
@@ -259,4 +252,4 @@ function AllStocks() {
   );
 }
 
-export default AllStocks;
+export default SalesSheet;

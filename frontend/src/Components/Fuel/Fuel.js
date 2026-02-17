@@ -16,6 +16,7 @@ import Header from "../Header/Header";
 
 import FuelIn from "./FuelIn";
 import FuelOut from "./FuelOut";
+import TotalFuelIn from "./TotalFuelIn";
 
 const drawerWidth = 260;
 
@@ -37,7 +38,7 @@ const navItemStyle = (active) => ({
 });
 
 function Fuel() {
-  const [activePage, setActivePage] = useState("in");
+  const [activePage, setActivePage] = useState("total");
 
   const renderContent = () => {
     switch (activePage) {
@@ -45,8 +46,10 @@ function Fuel() {
         return <FuelIn />;
       case "out":
         return <FuelOut />;
+      case "total":
+        return <TotalFuelIn />;
       default:
-        return null;
+        return <TotalFuelIn />;
     }
   };
 
@@ -69,9 +72,19 @@ function Fuel() {
           <Toolbar />
 
           <List>
-            <ListItemButton
+            {/* <ListItemButton
               sx={navItemStyle(activePage === "in")}
               onClick={() => setActivePage("in")}
+            >
+              <ListItemIcon>
+                <LocalGasStationIcon color="primary" />
+              </ListItemIcon>
+              <ListItemText primary="Fuel In" />
+            </ListItemButton> */}
+
+            <ListItemButton
+              sx={navItemStyle(activePage === "total")}
+              onClick={() => setActivePage("total")}
             >
               <ListItemIcon>
                 <LocalGasStationIcon color="primary" />
@@ -88,6 +101,7 @@ function Fuel() {
               </ListItemIcon>
               <ListItemText primary="Fuel Out" />
             </ListItemButton>
+
           </List>
         </Drawer>
 

@@ -53,6 +53,39 @@ function CustomerPayments() {
 
     const handleSave = async () => {
         try {
+
+            const missingFields = [];
+
+        if (!form.customerId) missingFields.push("Customer");
+        if (!form.date) missingFields.push("Date");
+
+        if (!form.paidAmount || isNaN(form.paidAmount) || Number(form.paidAmount) <= 0) {
+            missingFields.push("Valid Paid Amount");
+        }
+
+        if (missingFields.length > 0) {
+            alert("Missing Fields: " + missingFields.join(", "));
+            return;
+        }
+
+        // 🔴 BLOCK IF TOTAL SALE IS ZERO
+        if (!outstanding || Number(outstanding.total_sale_amount) <= 0) {
+            alert("Payment not allowed. Total sale amount is zero.");
+            return;
+        }
+
+        // 🔴 BLOCK IF NO OUTSTANDING
+        if (Number(outstanding.outstanding) <= 0) {
+            alert("No outstanding amount for this customer.");
+            return;
+        }
+
+        // 🔴 BLOCK IF PAYMENT > OUTSTANDING
+        if (Number(form.paidAmount) > Number(outstanding.outstanding)) {
+            alert("Payment amount cannot exceed outstanding balance.");
+            return;
+        }
+
             const payload = {
                 customer: form.customerId,
                 paid_amount: Number(form.paidAmount),
@@ -82,6 +115,13 @@ function CustomerPayments() {
             });
 
             alert("Customer payment saved successfully");
+            setForm(
+                {
+        customerId: "",
+        date: new Date().toISOString().split("T")[0],
+        paidAmount: "",
+    });
+            setOutstanding(null);
 
         } catch (error) {
             console.error("Payment error:", error);

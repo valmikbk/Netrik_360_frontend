@@ -159,9 +159,9 @@ function SalesVsPurchases() {
       );
 
       const data = await res.json();
-      console.log("Sales vs Purchase data:", data);
 
       setRows(data);
+      console.log("Sales vs Purchase data:", data);
     } catch (err) {
       console.error("Fetch error", err);
     } finally {

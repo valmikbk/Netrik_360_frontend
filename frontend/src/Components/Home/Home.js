@@ -223,7 +223,7 @@ function Home() {
                   fontSize: "0.95rem",
                 }}
               >
-                🧾 Sales Bill
+                🧾 SALES BILL
               </button>
 
               <button
@@ -239,7 +239,7 @@ function Home() {
                   fontSize: "0.95rem",
                 }}
               >
-                📦 Purchase Bill
+                📦 RAW MATERIAL
               </button>
             </Box>
 

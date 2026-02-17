@@ -41,6 +41,7 @@ import FuelVsKilometer from "./FuelVsKilometer";
 import SalesDetails from "./SalesDetails";
 import CustomerRecievedpayment from "./CustomerRecievedpayment";
 import ProductionReport from "./ProductionReport";
+import SalesSheet from "./SalesSheet";
 
 const drawerWidth = 260;
 
@@ -69,6 +70,7 @@ function Reports() {
       case "sales-invoice": return <SalesInvoice />;
       case "sales-details": return <SalesDetails />;
       case "all-stocks": return <AllStocks />;
+      case "sales-sheet": return <SalesSheet />;
       case "salary-sheet": return <SalarySheet />;
       case "blasting-outstanding": return <BlastingOutstanding />;
       case "blasting-paid-payment": return <BlastingPaidPayment />;
@@ -110,67 +112,72 @@ function Reports() {
 
             <ListItemButton sx={navItemStyle(activePage === "sales-details")} onClick={() => setActivePage("sales-details")}>
               <ListItemIcon><BarChartIcon /></ListItemIcon>
-              <ListItemText primary="Sales Details" />
+              <ListItemText primary="SALES DETAILS" />
             </ListItemButton>
 
             <ListItemButton sx={navItemStyle(activePage === "all-stocks")} onClick={() => setActivePage("all-stocks")}>
               <ListItemIcon><Inventory2Icon /></ListItemIcon>
-              <ListItemText primary="All Stocks" />
+              <ListItemText primary="ALL STOCKS" />
+            </ListItemButton>
+
+            <ListItemButton sx={navItemStyle(activePage === "sales-sheet")} onClick={() => setActivePage("sales-sheet")}>
+              <ListItemIcon><Inventory2Icon /></ListItemIcon>
+              <ListItemText primary="Sales Sheet" />
             </ListItemButton>
 
             <ListItemButton sx={navItemStyle(activePage === "salary-sheet")} onClick={() => setActivePage("salary-sheet")}>
               <ListItemIcon><PaymentsIcon /></ListItemIcon>
-              <ListItemText primary="Salary Sheet" />
+              <ListItemText primary="SALARY SHEET" />
             </ListItemButton>
 
             <ListItemButton sx={navItemStyle(activePage === "blasting-outstanding")} onClick={() => setActivePage("blasting-outstanding")}>
               <ListItemIcon><PendingActionsIcon /></ListItemIcon>
-              <ListItemText primary="Blasting Outstanding" />
+              <ListItemText primary="BLASTING OUTSTANDING" />
             </ListItemButton>
 
             <ListItemButton sx={navItemStyle(activePage === "blasting-paid-payment")} onClick={() => setActivePage("blasting-paid-payment")}>
               <ListItemIcon><PaidIcon /></ListItemIcon>
-              <ListItemText primary="Blasting Paid Payment" />
+              <ListItemText primary="BLASTING PAID PAYMENT" />
             </ListItemButton>
 
             <ListItemButton sx={navItemStyle(activePage === "customer-outstanding")} onClick={() => setActivePage("customer-outstanding")}>
               <ListItemIcon><AccountBalanceWalletIcon /></ListItemIcon>
-              <ListItemText primary="Customer Outstanding" />
+              <ListItemText primary="CUSTOMER OUTSTANDING" />
             </ListItemButton>
 
             <ListItemButton sx={navItemStyle(activePage === "customer-received-payment")} onClick={() => setActivePage("customer-received-payment")}>
               <ListItemIcon><AccountBalanceWalletIcon /></ListItemIcon>
-              <ListItemText primary="Customer Received Payment" />
+              <ListItemText primary="CUSTOMER RECEIVED PAYMENT" />
             </ListItemButton>
 
             <ListItemButton sx={navItemStyle(activePage === "daily-purchase")} onClick={() => setActivePage("daily-purchase")}>
               <ListItemIcon><ShoppingCartIcon /></ListItemIcon>
-              <ListItemText primary="Daily Purchase" />
+              <ListItemText primary="DAILY PURCHASE" />
             </ListItemButton>
 
             <ListItemButton sx={navItemStyle(activePage === "fuel-in-vs-out")} onClick={() => setActivePage("fuel-in-vs-out")}>
               <ListItemIcon><LocalGasStationIcon /></ListItemIcon>
-              <ListItemText primary="Fuel In vs Out" />
+              <ListItemText primary="FUEL IN VS OUT" />
             </ListItemButton>
 
             <ListItemButton sx={navItemStyle(activePage === "fuel-vs-km")} onClick={() => setActivePage("fuel-vs-km")}>
               <ListItemIcon><SpeedIcon /></ListItemIcon>
-              <ListItemText primary="Fuel vs KM" />
+              <ListItemText primary="FUEL VS KM" />
             </ListItemButton>
 
             <ListItemButton sx={navItemStyle(activePage === "purchase-report")} onClick={() => setActivePage("purchase-report")}>
               <ListItemIcon><FactoryIcon /></ListItemIcon>
-              <ListItemText primary="Purchase Report" />
+              <ListItemText primary="PURCHASE REPORT" />
             </ListItemButton>
 
             <ListItemButton sx={navItemStyle(activePage === "sales-vs-purchases")} onClick={() => setActivePage("sales-vs-purchases")}>
               <ListItemIcon><CompareArrowsIcon /></ListItemIcon>
-              <ListItemText primary="Sales vs Purchases" />
+              <ListItemText primary="SALES VS PURCHASES" />
             </ListItemButton>
 
             <ListItemButton sx={navItemStyle(activePage === "all-in-one-report")} onClick={() => setActivePage("all-in-one-report")}>
               <ListItemIcon><DashboardIcon /></ListItemIcon>
-              <ListItemText primary="All in One Report" />
+              <ListItemText primary="ALL IN ONE REPORT" />
             </ListItemButton>
           </List>
         </Drawer>

@@ -78,26 +78,46 @@ function SalaryAttendance() {
 
   /* ================= SAVE ATTENDANCE ================= */
   const saveAttendance = async () => {
+  try {
     const records = [];
 
-    Object.entries(attendance).forEach(([empId, dates]) => {
-      Object.entries(dates).forEach(([date, att]) => {
+    // 🔥 Generate FULL month attendance for ALL employees
+    employees.forEach(emp => {
+      for (let i = 1; i <= totalDays; i++) {
+        const date = `${year}-${String(month).padStart(2,"0")}-${String(i).padStart(2,"0")}`;
+
+        const status =
+          attendance[emp.id]?.[date] || "A";  // Default to Absent
+
         records.push({
-          employee_id: empId,
+          employee_id: emp.id,
           date,
-          attendance: att,
+          attendance: status,
         });
-      });
+      }
     });
 
-    await fetch("http://localhost:8000/api/attendance/save/", {
+    const res = await fetch("http://localhost:8000/api/attendance/save/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ records }),
     });
 
-    alert("Attendance saved successfully");
-  };
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Failed to save attendance");
+      return;
+    }
+
+    alert(`Attendance saved successfully`);
+
+  } catch (err) {
+    console.error(err);
+    alert("Server error");
+  }
+};
+
 
   return (
     <Box p={3}>

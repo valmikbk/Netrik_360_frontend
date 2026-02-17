@@ -110,6 +110,7 @@ const generateSalesDetailsPDF = async ({
       "Bill No",
       "Customer",
       "Village",
+      "Vehicle Number",
       "Item",
       "Brass",
       "Amount",
@@ -121,6 +122,7 @@ const generateSalesDetailsPDF = async ({
       r.billNo,
       r.customerName,
       r.village,
+      r.VehicleNo,
       r.item,
       r.brass,
       r.amount,
@@ -309,7 +311,7 @@ function SalesDetails() {
             <TableHead>
               <TableRow>
                 {[
-                  "Date","Bill No","Customer","Village","Item",
+                  "Date","Bill No","Customer","Village","Vehicle No","Item",
                   "Brass","Amount","Balance","MR Name"
                 ].map(h => (
                   <TableCell key={h}><b>{h}</b></TableCell>
@@ -324,6 +326,7 @@ function SalesDetails() {
                   <TableCell>{r.billNo}</TableCell>
                   <TableCell>{r.customerName}</TableCell>
                   <TableCell>{r.village}</TableCell>
+                  <TableCell>{r.vehicleNumber}</TableCell>
                   <TableCell>{r.item}</TableCell>
                   <TableCell>{r.brass}</TableCell>
                   <TableCell>₹ {r.amount}</TableCell>

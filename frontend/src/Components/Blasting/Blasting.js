@@ -65,6 +65,20 @@ function Blasting() {
 
     const handleSave = async () => {
         try {
+
+            const missingFields = [];
+
+        if (!form.supplierId) missingFields.push("Supplier");
+        if (!form.hole || Number(form.hole) <= 0) missingFields.push("Hole");
+        if (!form.feet || Number(form.feet) <= 0) missingFields.push("Feet");
+        if (!form.rate || Number(form.rate) <= 0) missingFields.push("Rate");
+        // if (!grandTotal || Number(grandTotal) <= 0) missingFields.push("Grand Total");
+
+        if (missingFields.length > 0) {
+            alert("Missing Fields: " + missingFields.join(", "));
+            return;
+        }
+
             const formData = new FormData();
             formData.append("supplier", form.supplierId);
             formData.append("hole", form.hole);

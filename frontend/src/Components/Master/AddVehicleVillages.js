@@ -15,6 +15,7 @@ function AddVehicleVillages() {
     type: "VEHICLE",
     nameOrNumber: "",
     km: "",
+    approximateDistance: "", // ✅ NEW FIELD
   });
 
   const [loading, setLoading] = useState(false);
@@ -28,12 +29,19 @@ function AddVehicleVillages() {
       type: "VEHICLE",
       nameOrNumber: "",
       km: "",
+      approximateDistance: "",
     });
   };
 
   const handleSubmit = async () => {
     if (!form.nameOrNumber) {
       alert("Please fill required fields");
+      return;
+    }
+
+    // ✅ Extra validation for village
+    if (form.type === "VILLAGE" && !form.approximateDistance) {
+      alert("Please enter approximate distance");
       return;
     }
 
@@ -69,6 +77,7 @@ function AddVehicleVillages() {
   };
 
   const isVehicle = form.type === "VEHICLE";
+  const isVillage = form.type === "VILLAGE";
 
   return (
     <Card
@@ -80,8 +89,19 @@ function AddVehicleVillages() {
       }}
     >
       {/* Header */}
-      <Box sx={{ px: 3, py: 2, background: "linear-gradient(90deg, #1a237e, #283593)", }}>
-        <Typography variant="h6" color="#fff" fontWeight={600} textAlign="center">
+      <Box
+        sx={{
+          px: 3,
+          py: 2,
+          background: "linear-gradient(90deg, #1a237e, #283593)",
+        }}
+      >
+        <Typography
+          variant="h6"
+          color="#fff"
+          fontWeight={600}
+          textAlign="center"
+        >
           ADD VEHICLE / VILLAGES
         </Typography>
       </Box>
@@ -111,15 +131,17 @@ function AddVehicleVillages() {
             fullWidth
           />
 
-          {/* {isVehicle && (
+          {/* ✅ SHOW ONLY FOR VILLAGE */}
+          {isVillage && (
             <TextField
-              label="KM"
-              name="km"
-              value={form.km}
+              label="Approximate Distance (KM) *"
+              name="approximateDistance"
+              value={form.approximateDistance}
               onChange={handleChange}
+              type="number"
               fullWidth
             />
-          )} */}
+          )}
         </Box>
 
         {/* Actions */}

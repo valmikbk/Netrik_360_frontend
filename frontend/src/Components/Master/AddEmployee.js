@@ -63,7 +63,7 @@ function AddEmployee() {
         return;
       }
 
-      alert("Employee added successfully");
+      alert("Employee added successfully✅");
       handleReset();
     } catch (error) {
       console.error("Network Error:", error);

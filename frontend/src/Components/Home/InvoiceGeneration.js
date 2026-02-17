@@ -12,33 +12,50 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import MeghanaLogo from "../Logo/Meghana_stone_logo.png";
 import Header from "../Header/Header";
+import { useNavigate } from "react-router-dom";
+
 
 const generateNextBillNumber = (lastBill) => {
-    const today = new Date()
-        .toISOString()
-        .slice(0, 10)
-        .replace(/-/g, "");
+    if (!lastBill) return "01";
 
-    if (!lastBill) {
-        return `INV-${today}-0001`;
-    }
+    const lastSeq = parseInt(lastBill, 10);
 
-    const parts = lastBill.split("-");
-    const lastDate = parts[1];
-    const lastSeq = parseInt(parts[2], 10);
+    if (isNaN(lastSeq)) return "01";
 
-    if (lastDate === today) {
-        const nextSeq = String(lastSeq + 1).padStart(4, "0");
-        return `INV-${today}-${nextSeq}`;
-    }
-
-    // New day → reset count
-    return `INV-${today}-0001`;
+    return String(lastSeq + 1).padStart(2, "0");
 };
 
 
 
+// const generateNextBillNumber = (lastBill) => {
+//     const today = new Date()
+//         .toISOString()
+//         .slice(0, 10)
+//         .replace(/-/g, "");
+
+//     if (!lastBill) {
+//         // return `INV-${today}-0001`;
+//         return `INV-${today}-0001`;
+//     }
+
+//     const parts = lastBill.split("-");
+//     const lastDate = parts[1];
+//     const lastSeq = parseInt(parts[2], 10);
+
+//     if (lastDate === today) {
+//         const nextSeq = String(lastSeq + 1).padStart(4, "0");
+//         return `INV-${today}-${nextSeq}`;
+//     }
+
+//     // New day → reset count
+//     return `INV-${today}-0001`;
+// };
+
+
+
 function InvoicePage() {
+    const navigate = useNavigate();
+
 
     const [isSaved, setIsSaved] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -53,8 +70,13 @@ function InvoicePage() {
     const [materials, setMaterials] = useState([]);
     const [villages, setVillages] = useState([])
 
+    const [vehicles, setVehicles] = useState([]);
+    const [selectedVehicleId, setSelectedVehicleId] = useState("");
+
+
     const [mrs, setMrs] = useState([]);
     const [selectedMrId, setSelectedMrId] = useState("");
+    const [selectedMrName, setSelectedMrName] = useState("");
 
     const [saved, setSaved] = useState(false);
     const [pdfBlob, setPdfBlob] = useState(null);
@@ -70,7 +92,7 @@ function InvoicePage() {
         brass: 6,
         rate: 18000,
         vehicleNo: "SWARAJ",
-        paymentType: "Paid", // ✅ NEW
+        paymentType: "Credit", // ✅ NEW
     });
 
 
@@ -78,6 +100,7 @@ function InvoicePage() {
         fetch("http://localhost:8000/api/sales/last-bill/")
             .then(res => res.json())
             .then(data => {
+                console.log("Last bill from backend:", data.last_bill_number);
                 const nextBill = generateNextBillNumber(data.last_bill_number);
                 setBillNumber(nextBill);
             })
@@ -100,6 +123,11 @@ function InvoicePage() {
             .then(res => res.json())
             .then(data => setMrs(data))
             .catch(err => console.error("MR fetch error", err));
+        fetch("http://localhost:8000/api/vehicles/")
+            .then((res) => res.json())
+            .then((data) => setVehicles(data))
+            .catch(() => alert("Failed to load vehicles"));
+
     }, []);
 
 
@@ -126,13 +154,37 @@ function InvoicePage() {
 
     const generatePDF = async () => {
         const input = document.getElementById("invoice");
+
         const canvas = await html2canvas(input, { scale: 2 });
         const imgData = canvas.toDataURL("image/png");
 
         const pdf = new jsPDF("p", "mm", "a4");
+
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+
+        // Each copy height = half page
+        const copyHeight = pdfHeight / 2;
+
+        // Calculate image height maintaining aspect ratio
+        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+        // First copy (TOP)
+        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, Math.min(imgHeight, copyHeight));
+
+        // Divider line (optional)
+        pdf.setLineWidth(0.5);
+        pdf.line(0, copyHeight, pdfWidth, copyHeight);
+
+        // Second copy (BOTTOM)
+        pdf.addImage(
+            imgData,
+            "PNG",
+            0,
+            copyHeight,
+            pdfWidth,
+            Math.min(imgHeight, copyHeight)
+        );
 
         const blob = pdf.output("blob");
         setPdfBlob(blob);
@@ -141,61 +193,79 @@ function InvoicePage() {
     };
 
 
+
     const handleSave = async () => {
-  try {
-    // 1️⃣ Generate PDF ONCE
-    const { blob } = await generatePDF();
+        try {
 
-    // 2️⃣ Prepare backend payload
-    const formData = new FormData();
-    formData.append("bill_number", billNumber);
-    formData.append("customer", selectedCustomerId);
-    formData.append("village", selectedVillageId);
-    formData.append("material", selectedMaterialId);
-    formData.append("quantity", invoiceData.brass);
-    formData.append("amount", amount);
-    formData.append("mr", selectedMrId);
-    formData.append("payment_type", invoiceData.paymentType);
-    formData.append("bill_doc", blob, `${billNumber}.pdf`);
+            const missingFields = [];
 
-    // 3️⃣ Save to backend
-    const res = await fetch("http://localhost:8000/api/sales/create/", {
-      method: "POST",
-      body: formData,
-    });
+            if (!billNumber) missingFields.push("Bill Number");
+            if (!selectedCustomerId) missingFields.push("Customer");
+            if (!selectedVillageId) missingFields.push("Village");
+            if (!selectedVehicleId) missingFields.push("Vehicle");
+            if (!invoiceData.item) missingFields.push("Material");
+            if (!invoiceData.brass) missingFields.push("Quantity");
+            if (!amount) missingFields.push("Amount");
+            if (!selectedMrId) missingFields.push("MR");
+            if (!invoiceData.paymentType) missingFields.push("Payment Type");
 
-    const data = await res.json();
+            if (missingFields.length > 0) {
+                alert("Missing Fields: " + missingFields.join(", "));
+                return;
+            }
+            // 1️⃣ Generate PDF ONCE
+            const { blob } = await generatePDF();
 
-    if (!res.ok) {
-      alert(data.error || "Save failed");
-      return;
-    }
-
-    alert("Invoice saved successfully");
-    setSaved(true);
-
-  } catch (err) {
-    console.error(err);
-    alert("Server error");
-  }
-};
+            // 2️⃣ Prepare backend payload
+            const formData = new FormData();
+            formData.append("bill_number", billNumber);
+            formData.append("customer", selectedCustomerId);
+            formData.append("village", selectedVillageId);
+            formData.append("vehicle", selectedVehicleId);
+            formData.append("material", invoiceData.item);
+            formData.append("quantity", invoiceData.brass);
+            formData.append("amount", amount);
+            formData.append("mr", selectedMrId);
+            formData.append("payment_type", invoiceData.paymentType);
+            formData.append("bill_doc", blob, `${billNumber}.pdf`);
 
 
-const handleDownload = async () => {
-  if (!pdfBlob) return;
+            // 3️⃣ Save to backend
+            const res = await fetch("http://localhost:8000/api/sales/create/", {
+                method: "POST",
+                body: formData,
+            });
 
-  const pdf = new jsPDF("p", "mm", "a4");
-  const url = URL.createObjectURL(pdfBlob);
-  window.open(url);
-};
+            const data = await res.json();
 
-const handlePrint = () => {
-  if (!pdfBlob) return;
+            if (!res.ok) {
+                alert(data.error || "Save failed");
+                return;
+            }
 
-  const url = URL.createObjectURL(pdfBlob);
-  const win = window.open(url);
-  win.print();
-};
+            alert("Invoice saved successfully");
+            setSaved(true);
+
+        } catch (err) {
+            console.error(err);
+            alert("Server error");
+        }
+    };
+
+
+    const handleDownload = async () => {
+        if (!pdfBlob) return;
+        const url = URL.createObjectURL(pdfBlob);
+        window.open(url);
+    };
+
+    const handlePrint = () => {
+        if (!pdfBlob) return;
+        const url = URL.createObjectURL(pdfBlob);
+        const win = window.open(url);
+        win.print();
+    };
+
 
 
     return (
@@ -216,11 +286,18 @@ const handlePrint = () => {
                             label="Customer Name"
                             value={selectedCustomerId}
                             onChange={(e) => {
-                                const id = e.target.value;
-                                const customer = customers.find(c => c.id === id);
+                                const value = e.target.value;
 
-                                setSelectedCustomerId(id);
+                                // ➕ Redirect to Add Customer
+                                if (value === "__add_customer__") {
+                                    navigate("home/add-customer");
+                                    return;
+                                }
 
+                                const customer = customers.find(c => c.id === value);
+                                if (!customer) return;
+
+                                setSelectedCustomerId(value);
                                 setInvoiceData(prev => ({
                                     ...prev,
                                     customerName: customer.name,
@@ -229,15 +306,28 @@ const handlePrint = () => {
                                 }));
                             }}
                         >
+                            {/* ➕ ADD CUSTOMER OPTION */}
+                            <MenuItem
+                                value="__add_customer__"
+                                sx={{
+                                    fontWeight: 600,
+                                    color: "primary.main",
+                                }}
+                            >
+                                ➕ Add New Customer
+                            </MenuItem>
+
+                            {/* <Divider /> */}
+
+                            {/* EXISTING CUSTOMERS */}
                             {customers.map(c => (
                                 <MenuItem key={c.id} value={c.id}>
                                     {c.name}
                                 </MenuItem>
                             ))}
                         </TextField>
-
-
                     </Grid>
+
 
                     {/* <Grid item xs={6}>
                         <TextField
@@ -316,12 +406,33 @@ const handlePrint = () => {
 
                     <Grid item xs={3}>
                         <TextField
+                            select
                             fullWidth
                             label="Vehicle No"
-                            name="vehicleNo"
-                            value={invoiceData.vehicleNo}
-                            onChange={handleChange}
-                        />
+                            value={selectedVehicleId}
+                            onChange={(e) => {
+                                const id = e.target.value;
+                                const vehicle = vehicles.find(v => v.id === id);
+
+                                setSelectedVehicleId(id);
+
+                                setInvoiceData(prev => ({
+                                    ...prev,
+                                    vehicleNo: vehicle?.vehicle_number || "",
+                                }));
+                            }}
+                        >
+                            <MenuItem value="">
+                                <em>Select Vehicle</em>
+                            </MenuItem>
+
+                            {vehicles.map((v) => (
+                                <MenuItem key={v.id} value={v.id}>
+                                    {v.vehicle_number}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+
                     </Grid>
 
                     <Grid item xs={3}>
@@ -330,7 +441,13 @@ const handlePrint = () => {
                             fullWidth
                             label="MR Name"
                             value={selectedMrId}
-                            onChange={(e) => setSelectedMrId(e.target.value)}
+                            onChange={(e) => {
+                                const mrId = e.target.value;
+                                const mr = mrs.find((m) => m.id === mrId);
+
+                                setSelectedMrId(mrId);
+                                setSelectedMrName(mr?.name || "");
+                            }}
                         >
                             <MenuItem value="">
                                 <em>Select MR</em>
@@ -346,7 +463,7 @@ const handlePrint = () => {
 
 
                     {/* ✅ PAYMENT TYPE */}
-                    <Grid item xs={3}>
+                    {/* <Grid item xs={3}>
                         <TextField
                             select
                             fullWidth
@@ -358,7 +475,7 @@ const handlePrint = () => {
                             <MenuItem value="Paid">Paid</MenuItem>
                             <MenuItem value="Credit">Credit</MenuItem>
                         </TextField>
-                    </Grid>
+                    </Grid> */}
                 </Grid>
             </Paper>
 
@@ -382,7 +499,7 @@ const handlePrint = () => {
                         STONE CRUSHER & M SAND
                     </Typography>
                     <Typography variant="body2">
-                        Manufacturer of Stone M5, M10, M20, M40, All Mix & M Sand
+                        Manufacturer of Stone M20, M40, All Mix, M Sand & Dust
                     </Typography>
                     <Typography variant="caption" display="block">
                         Chimegaon, Tq. Kamalanagar, Dist. Bidar, Karnataka - 585417
@@ -412,8 +529,8 @@ const handlePrint = () => {
                         <Typography>GST No : 29AZVPB1008H1ZG</Typography>
 
                         {/* ✅ PAYMENT TYPE SHOWN IN BILL */}
-                        <Typography fontWeight={600}>
-                            Payment Type : {invoiceData.paymentType}
+                        <Typography >
+                            Mr Name : {selectedMrName || "MR Name"}
                         </Typography>
                     </Box>
                 </Box>
@@ -509,9 +626,11 @@ const handlePrint = () => {
                 <Button
                     variant="contained"
                     onClick={handleSave}
+                    disabled={saved || saving}
                 >
-                    SAVE
+                    {saving ? "Saving..." : "SAVE"}
                 </Button>
+
 
 
                 <Button
@@ -523,13 +642,13 @@ const handlePrint = () => {
                 </Button>
 
 
-<Button
-  variant="outlined"
-  disabled={!saved}
-  onClick={handlePrint}
->
-  Print
-</Button>
+                <Button
+                    variant="outlined"
+                    disabled={!saved}
+                    onClick={handlePrint}
+                >
+                    Print
+                </Button>
 
             </Box>
 
