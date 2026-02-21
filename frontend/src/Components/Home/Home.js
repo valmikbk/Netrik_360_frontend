@@ -72,26 +72,27 @@ function Home() {
       {/* Main content */}
       {/* <Box sx={{ display: "flex", gap: 3, p: 3, height: "650px" }}> */}
       <Box
-  sx={{
-    display: "flex",
-    flexDirection: { xs: "column", md: "row" },
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" },
 
-    gap: { xs: 2, sm: 3, lg: 4 },
+          gap: { xs: 2, sm: 3, lg: 4 },
 
-    p: { xs: 2, sm: 3, lg: 4 },
+          p: { xs: 2, sm: 3, lg: 4 },
 
-    height: { xs: "auto", md: "650px", xl: "75vh" },
+          height: { xs: "auto", md: "650px", xl: "75vh" },
 
-    maxWidth: {
-      xs: "100%",
-      lg: "1400px",
-      xl: "1800px",
-    },
+          maxWidth: {
+            xs: "100%",
+            lg: "1400px",
+            xl: "1800px",
+          },
 
-    width: "100%",
-    mx: "auto", // center on large screens
-  }}
->
+          width: "100%",
+          mx: "auto", // center on large screens
+          mt:2
+        }}
+      >
 
         {/* Left: Camera */}
         <Paper

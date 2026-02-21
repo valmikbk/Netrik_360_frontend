@@ -196,130 +196,202 @@ function CustomerOutstanding() {
   };
 
   return (
-    <Box p={2}>
-      <Typography variant="h5" fontWeight={700} mb={2}>
-        Customer Outstanding
+  <Box sx={{ width: "100%" }}>
+
+    {/* ================= HEADER STRIP ================= */}
+    <Box
+      sx={{
+        mb: 3,
+        px: 3,
+        py: 2,
+        borderRadius: 2,
+        background: "linear-gradient(90deg, #1a237e, #283593)",
+        color: "#fff",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <Typography variant="h6" fontWeight={600}>
+        CUSTOMER OUTSTANDING REPORT
       </Typography>
 
-      {/* FILTERS */}
-      <Card sx={{ p: 2, mb: 2 }}>
-        <Box display="flex" gap={2} flexWrap="wrap">
-          <TextField
-            size="small"
-            label="Search Customer / MR / Phone"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
+      <Box>
+        <IconButton onClick={handleDownload} sx={{ color: "#fff" }}>
+          <FileDownloadIcon />
+        </IconButton>
 
-          <TextField
-            select
-            size="small"
-            label="Period"
-            value={period}
-            sx={{ minWidth: 140 }}
-            onChange={(e) => setPeriod(e.target.value)}
-          >
-            <MenuItem value="This Month">This Month</MenuItem>
-            <MenuItem value="Last Month">Last Month</MenuItem>
-            <MenuItem value="Last Year">Last Year</MenuItem>
-          </TextField>
+        <IconButton onClick={handlePrint} sx={{ color: "#fff" }}>
+          <PrintIcon />
+        </IconButton>
+      </Box>
+    </Box>
 
-          <TextField
-            size="small"
-            type="date"
-            label="From Date"
-            InputLabelProps={{ shrink: true }}
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-          />
+    {/* ================= FILTER SECTION ================= */}
+    <Card
+      sx={{
+        p: 3,
+        mb: 3,
+        borderRadius: 2,
+        boxShadow: "0px 4px 14px rgba(0,0,0,0.06)",
+      }}
+    >
+      <Box display="flex" gap={3} flexWrap="wrap">
 
-          <TextField
-            size="small"
-            type="date"
-            label="To Date"
-            InputLabelProps={{ shrink: true }}
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-          />
-        </Box>
-      </Card>
+        <TextField
+          size="small"
+          label="SEARCH CUSTOMER / MR / PHONE"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ minWidth: 240 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+        />
 
-      {/* SUMMARY */}
-      <Card sx={{ p: 2, mb: 3, maxWidth: 420 }}>
-        <Typography>Total Outstanding</Typography>
-        <Typography variant="h5" fontWeight={700} color="error.main">
-          ₹ {totalOutstanding.toLocaleString("en-IN")}
-        </Typography>
-        <Typography variant="body2">
-          Customers: {rows.length}
-        </Typography>
-      </Card>
+        {/* <TextField
+          select
+          size="small"
+          label="Period"
+          value={period}
+          onChange={(e) => setPeriod(e.target.value)}
+        >
+          <MenuItem value="This Month">This Month</MenuItem>
+          <MenuItem value="Last Month">Last Month</MenuItem>
+          <MenuItem value="Last Year">Last Year</MenuItem>
+        </TextField> */}
 
-      {/* TABLE */}
-      <Card sx={{ p: 2 }}>
-        <Box display="flex" justifyContent="space-between" mb={1}>
-          <Typography variant="h6">Outstanding List</Typography>
-          <Box>
-            <IconButton onClick={handleDownload}>
-              <FileDownloadIcon />
-            </IconButton>
-            <IconButton onClick={handlePrint}>
-              <PrintIcon />
-            </IconButton>
-          </Box>
-        </Box>
+        <TextField
+          size="small"
+          type="date"
+          label="FROM"
+          InputLabelProps={{ shrink: true }}
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+        />
 
-        <Divider sx={{ mb: 1 }} />
+        <TextField
+          size="small"
+          type="date"
+          label="TO"
+          InputLabelProps={{ shrink: true }}
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+        />
+      </Box>
+    </Card>
 
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
+    {/* ================= SUMMARY ================= */}
+    <Card sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+      <Typography variant="caption" fontWeight={600} color="text.secondary">
+        TOTAL OUTSTANDING
+      </Typography>
+
+      <Typography variant="h6" fontWeight={700} color="error.main">
+        ₹ {totalOutstanding.toLocaleString("en-IN")}
+      </Typography>
+
+      <Typography variant="body2" mt={1}>
+        Customers: {rows.length}
+      </Typography>
+    </Card>
+
+    {/* ================= TABLE ================= */}
+    <Card sx={{ borderRadius: 2 }}>
+      <TableContainer>
+        <Table size="small">
+
+          <TableHead>
+            <TableRow>
+              {[
+                "SR NO",
+                "CUSTOMER NAME",
+                "MR NAME",
+                "PHONE",
+                "OUTSTANDING AMOUNT (₹)",
+              ].map((header, index, arr) => (
+                <TableCell
+                  key={header}
+                  align="center"
+                  sx={{
+                    fontWeight: 700,
+                    backgroundColor: "#f1f5f9",
+                    borderRight:
+                      index !== arr.length - 1
+                        ? "1px solid #e5e7eb"
+                        : "none",
+                  }}
+                >
+                  {header}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {rows.length === 0 ? (
               <TableRow>
-                {[
-                  "Sr No",
-                  "Customer Name",
-                  "MR Name",
-                  "Phone",
-                  "Outstanding Amount",
-                ].map((h) => (
-                  <TableCell key={h}><b>{h}</b></TableCell>
-                ))}
+                <TableCell colSpan={5} align="center">
+                  No outstanding records found
+                </TableCell>
               </TableRow>
-            </TableHead>
+            ) : (
+              rows.map((r, i) => (
+                <TableRow
+                  key={i}
+                  hover
+                  sx={{
+                    "&:nth-of-type(even)": {
+                      backgroundColor: "#f9fafb",
+                    },
+                  }}
+                >
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {i + 1}
+                  </TableCell>
 
-            <TableBody>
-              {rows.map((r, i) => (
-                <TableRow key={i}>
-                  <TableCell>{i + 1}</TableCell>
-                  <TableCell>{r.customerName}</TableCell>
-                  <TableCell>{r.mrName}</TableCell>
-                  <TableCell>{r.phone}</TableCell>
-                  <TableCell>
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {r.customerName}
+                  </TableCell>
+
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {r.mrName}
+                  </TableCell>
+
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {r.phone}
+                  </TableCell>
+
+                  <TableCell align="center">
                     ₹ {r.outstandingAmount.toLocaleString("en-IN")}
                   </TableCell>
                 </TableRow>
-              ))}
+              ))
+            )}
+          </TableBody>
 
-              {!loading && rows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    No outstanding records found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Card>
-    </Box>
-  );
+        </Table>
+      </TableContainer>
+    </Card>
+
+  </Box>
+);
 }
 
 export default CustomerOutstanding;

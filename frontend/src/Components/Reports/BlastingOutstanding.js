@@ -153,107 +153,206 @@ function BlastingOutstanding() {
   );
 
   return (
-    <Box p={2}>
-      <Typography variant="h5" fontWeight={700} mb={2}>
-        Blasting Outstanding
+  <Box sx={{ width: "100%" }}>
+
+    {/* ================= HEADER STRIP ================= */}
+    <Box
+      sx={{
+        mb: 3,
+        px: 3,
+        py: 2,
+        borderRadius: 2,
+        background: "linear-gradient(90deg, #1a237e, #283593)",
+        color: "#fff",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <Typography variant="h6" fontWeight={600}>
+        BLASTING OUTSTANDING REPORT
       </Typography>
 
-      {/* FILTERS */}
-      <Card sx={{ p: 2, mb: 2 }}>
-        <Box display="flex" gap={2} flexWrap="wrap">
-          <TextField
-            label="Search Party"
-            size="small"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
+      <Box>
+        <IconButton
+          onClick={async () => {
+            const doc = await generateOutstandingPDF({
+              rows,
+              fromDate,
+              toDate,
+              totalOutstanding,
+            });
+            doc.save("blasting_outstanding_report.pdf");
+          }}
+          sx={{ color: "#fff" }}
+        >
+          <FileDownloadIcon />
+        </IconButton>
 
-          <TextField
-            select
-            label="Period"
-            size="small"
-            value={period}
-            onChange={(e) => setPeriod(e.target.value)}
-          >
-            <MenuItem value="This Month">This Month</MenuItem>
-            <MenuItem value="Last Month">Last Month</MenuItem>
-            <MenuItem value="Last Year">Last Year</MenuItem>
-          </TextField>
+        <IconButton
+          onClick={async () => {
+            const doc = await generateOutstandingPDF({
+              rows,
+              fromDate,
+              toDate,
+              totalOutstanding,
+            });
+            window.open(doc.output("bloburl")).print();
+          }}
+          sx={{ color: "#fff" }}
+        >
+          <PrintIcon />
+        </IconButton>
+      </Box>
+    </Box>
 
-          <TextField
-            label="From Date"
-            type="date"
-            size="small"
-            InputLabelProps={{ shrink: true }}
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-          />
+    {/* ================= FILTER SECTION ================= */}
+    <Card
+      sx={{
+        p: 3,
+        mb: 3,
+        borderRadius: 2,
+        boxShadow: "0px 4px 14px rgba(0,0,0,0.06)",
+      }}
+    >
+      <Box display="flex" gap={3} flexWrap="wrap">
 
-          <TextField
-            label="To Date"
-            type="date"
-            size="small"
-            InputLabelProps={{ shrink: true }}
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-          />
-        </Box>
-      </Card>
+        <TextField
+          label="SEARCH PARTY"
+          size="small"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ minWidth: 220 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+        />
 
-      {/* SUMMARY */}
-      <Card sx={{ p: 2, mb: 3, maxWidth: 420 }}>
-        <Typography>Total Outstanding</Typography>
-        <Typography variant="h5" fontWeight={700} color="success.main">
-          ₹ {totalOutstanding.toLocaleString("en-IN")}
-        </Typography>
-        <Typography variant="body2">
-          Parties: {rows.length}
-        </Typography>
-      </Card>
+        {/* <TextField
+          select
+          label="Period"
+          size="small"
+          value={period}
+          onChange={(e) => setPeriod(e.target.value)}
+        >
+          <MenuItem value="This Month">This Month</MenuItem>
+          <MenuItem value="Last Month">Last Month</MenuItem>
+          <MenuItem value="Last Year">Last Year</MenuItem>
+        </TextField> */}
 
-      {/* TABLE */}
-      <Card sx={{ p: 2 }}>
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
+        <TextField
+          label="FROM"
+          type="date"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+        />
+
+        <TextField
+          label="TO"
+          type="date"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+        />
+      </Box>
+    </Card>
+
+    {/* ================= SUMMARY ================= */}
+    <Card sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+      <Typography variant="caption" fontWeight={600} color="text.secondary">
+        TOTAL OUTSTANDING
+      </Typography>
+
+      <Typography variant="h6" fontWeight={700} color="success.main">
+        ₹ {totalOutstanding.toLocaleString("en-IN")}
+      </Typography>
+
+      <Typography variant="body2" mt={1}>
+        Parties: {rows.length}
+      </Typography>
+    </Card>
+
+    {/* ================= TABLE ================= */}
+    <Card sx={{ borderRadius: 2 }}>
+      <TableContainer>
+        <Table size="small">
+
+          <TableHead>
+            <TableRow>
+              {["SR NO", "PARTY NAME", "OUTSTANDING AMOUNT (₹)"].map(
+                (header, index, arr) => (
+                  <TableCell
+                    key={header}
+                    align="center"
+                    sx={{
+                      fontWeight: 700,
+                      backgroundColor: "#f1f5f9",
+                      borderRight:
+                        index !== arr.length - 1
+                          ? "1px solid #e5e7eb"
+                          : "none",
+                    }}
+                  >
+                    {header}
+                  </TableCell>
+                )
+              )}
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {rows.length === 0 ? (
               <TableRow>
-                <TableCell><b>Sr No</b></TableCell>
-                <TableCell><b>Party Name</b></TableCell>
-                <TableCell><b>Outstanding Amount</b></TableCell>
+                <TableCell colSpan={3} align="center">
+                  No data found
+                </TableCell>
               </TableRow>
-            </TableHead>
+            ) : (
+              rows.map((r, i) => (
+                <TableRow
+                  key={i}
+                  hover
+                  sx={{
+                    "&:nth-of-type(even)": {
+                      backgroundColor: "#f9fafb",
+                    },
+                  }}
+                >
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {i + 1}
+                  </TableCell>
 
-            <TableBody>
-              {rows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={3} align="center">
-                    No data found
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {r.partyName}
+                  </TableCell>
+
+                  <TableCell align="center">
+                    ₹ {r.outstandingAmount.toLocaleString("en-IN")}
                   </TableCell>
                 </TableRow>
-              ) : (
-                rows.map((r, i) => (
-                  <TableRow key={i}>
-                    <TableCell>{i + 1}</TableCell>
-                    <TableCell>{r.partyName}</TableCell>
-                    <TableCell>
-                      ₹ {r.outstandingAmount.toLocaleString("en-IN")}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Card>
-    </Box>
-  );
+              ))
+            )}
+          </TableBody>
+
+        </Table>
+      </TableContainer>
+    </Card>
+
+  </Box>
+);
 }
 
 export default BlastingOutstanding;

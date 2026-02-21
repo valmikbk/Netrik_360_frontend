@@ -122,7 +122,7 @@ function SalaryAttendance() {
   return (
     <Box p={3}>
         <Header />
-      <Typography variant="h5" fontWeight={700} mb={2}>
+      <Typography variant="h5" fontWeight={700} mt={4} mb={2}>
         Salary & Attendance
       </Typography>
 

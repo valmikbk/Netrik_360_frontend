@@ -24,25 +24,54 @@ import AddEmployee from "./AddEmployee";
 import AddVehicleVillages from "./AddVehicleVillages";
 import UpdateEmployeeSalary from "./UpdateEmployeeSalary";
 import AddFuelType from "./AddFuelType";
+import UpdateRates from "./UpdateRates";
 
 const drawerWidth = 260;
 
+/* ================= BLUE OPTION STYLE ================= */
 const navItemStyle = (active) => ({
-  m: 1,
+  // 🔥 More spacing between items
+  mx: 2,
+  my: 1.8,          // increased vertical spacing
   borderRadius: 2,
-  backgroundColor: active ? "#e3f2fd" : "#ffffff",
-  border: "1px solid #e0e0e0",
+
+  background: active
+    ? "linear-gradient(145deg, #1361e7, #0d47a1)"
+    : "linear-gradient(145deg, #1976d2, #1565c0)",
+
+  color: "#ffffff",
+
+  border: active
+    ? "2px solid #00e676"
+    : "1px solid rgba(255,255,255,0.2)",
+
   boxShadow: active
-    ? "inset 0px 3px 6px rgba(0,0,0,0.25)"
-    : "0px 4px 8px rgba(0,0,0,0.15)",
-  transition: "all 0.25s ease",
+    ? "0 0 12px rgba(0,230,118,0.6)"
+    : "0 4px 8px rgba(0,0,0,0.15)",
+
+  // 🔥 Increase button height slightly
+  padding: "12px 14px",
+
+  transition: "all 0.3s ease",
 
   "&:hover": {
-    boxShadow: "0px 8px 16px rgba(0,0,0,0.25)",
     transform: "translateY(-2px)",
-    backgroundColor: "#f9fafb",
+    boxShadow: "0 0 16px rgba(25,118,210,0.6)",
+  },
+
+  "& .MuiListItemIcon-root": {
+    color: "#ffffff",
+    minWidth: 40,
+    fontSize: "1.2rem",   // slightly bigger icon
+  },
+
+  "& .MuiListItemText-primary": {
+    fontWeight: 700,
+    fontSize: "1rem",     // 🔥 increased font size
+    letterSpacing: "0.5px",
   },
 });
+
 
 function Master() {
   const [activePage, setActivePage] = useState("customer");
@@ -61,13 +90,15 @@ function Master() {
         return <UpdateEmployeeSalary />;
       case "fuel-type":
         return <AddFuelType />;
+      case "rates":
+        return <UpdateRates />;
       default:
         return null;
     }
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", }}>
       {/* Header */}
       <Header />
 
@@ -80,59 +111,82 @@ function Master() {
             width: drawerWidth,
             "& .MuiDrawer-paper": {
               width: drawerWidth,
-              backgroundColor: "#f5f6fa",
+              backgroundColor: "#f5f6fa", // 🔹 keep sidebar light
+              borderRight: "1px solid #e0e0e0",
             },
           }}
         >
           <Toolbar />
 
-          <List>
+          <List sx={{ mt: 7 }}>
             <ListItemButton
               sx={navItemStyle(activePage === "customer")}
               onClick={() => setActivePage("customer")}
             >
-              <ListItemIcon><PersonAddIcon /></ListItemIcon>
-              <ListItemText primary="Add Customer" />
+              <ListItemIcon>
+                <PersonAddIcon />
+              </ListItemIcon>
+              <ListItemText primary="ADD CUSTOMER" />
             </ListItemButton>
 
             <ListItemButton
               sx={navItemStyle(activePage === "supplier")}
               onClick={() => setActivePage("supplier")}
             >
-              <ListItemIcon><BusinessIcon /></ListItemIcon>
-              <ListItemText primary="Add Supplier" />
+              <ListItemIcon>
+                <BusinessIcon />
+              </ListItemIcon>
+              <ListItemText primary="ADD SUPPLIER" />
             </ListItemButton>
 
             <ListItemButton
               sx={navItemStyle(activePage === "employee")}
               onClick={() => setActivePage("employee")}
             >
-              <ListItemIcon><BadgeIcon /></ListItemIcon>
-              <ListItemText primary="Add Employee" />
+              <ListItemIcon>
+                <BadgeIcon />
+              </ListItemIcon>
+              <ListItemText primary="ADD EMPLOYEE" />
             </ListItemButton>
 
             <ListItemButton
               sx={navItemStyle(activePage === "vehicle")}
               onClick={() => setActivePage("vehicle")}
             >
-              <ListItemIcon><DirectionsCarIcon /></ListItemIcon>
-              <ListItemText primary="Add Vehicle / Villages" />
+              <ListItemIcon>
+                <DirectionsCarIcon />
+              </ListItemIcon>
+              <ListItemText primary="ADD VEHICLE / VILLAGE" />
             </ListItemButton>
 
             <ListItemButton
               sx={navItemStyle(activePage === "salary")}
               onClick={() => setActivePage("salary")}
             >
-              <ListItemIcon><CurrencyRupeeIcon /></ListItemIcon>
-              <ListItemText primary="Update Employee Salary" />
+              <ListItemIcon>
+                <CurrencyRupeeIcon />
+              </ListItemIcon>
+              <ListItemText primary="UPDATE/DELETE EMPLOYEE SALARY" />
+            </ListItemButton>
+
+            <ListItemButton
+              sx={navItemStyle(activePage === "rates")}
+              onClick={() => setActivePage("rates")}
+            >
+              <ListItemIcon>
+                <CurrencyRupeeIcon />
+              </ListItemIcon>
+              <ListItemText primary="UPDATE RATES" />
             </ListItemButton>
 
             <ListItemButton
               sx={navItemStyle(activePage === "fuel-type")}
               onClick={() => setActivePage("fuel-type")}
             >
-              <ListItemIcon><CurrencyRupeeIcon /></ListItemIcon>
-              <ListItemText primary="Add Fuel Type" />
+              <ListItemIcon>
+                <CurrencyRupeeIcon />
+              </ListItemIcon>
+              <ListItemText primary="ADD FUEL TYPE" />
             </ListItemButton>
           </List>
         </Drawer>
@@ -143,7 +197,7 @@ function Master() {
           sx={{
             flexGrow: 1,
             p: 3,
-            backgroundColor: "#fafafa",
+            backgroundColor: "#fafafa", // 🔹 keep main part light
             overflow: "auto",
           }}
         >

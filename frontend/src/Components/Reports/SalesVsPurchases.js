@@ -207,131 +207,200 @@ function SalesVsPurchases() {
     window.open(doc.output("bloburl")).print();
   };
 
-  return (
-    <Box p={2}>
-      <Typography variant="h5" fontWeight={700} mb={2}>
-        Sales vs Purchases
+  const formatDisplayDate = (dateString) => {
+  if (!dateString) return "";
+  const [year, month, day] = dateString.split("-");
+  return `${day}/${month}/${year}`;
+};
+
+ return (
+  <Box sx={{ width: "100%" }}>
+
+    {/* ================= ERP HEADER ================= */}
+    <Box
+      sx={{
+        mb: 3,
+        px: 3,
+        py: 2,
+        borderRadius: 2,
+        background: "linear-gradient(90deg, #1a237e, #283593)",
+        color: "#fff",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <Typography variant="h6" fontWeight={600}>
+        SALES VS PURCHASE REPORT
       </Typography>
 
-      {/* FILTERS */}
-      <Card sx={{ p: 2, mb: 2 }}>
-        <Box display="flex" gap={2} flexWrap="wrap">
-          <TextField
-            label="Search Date"
-            size="small"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
-
-          <TextField
-            select
-            label="Period"
-            size="small"
-            value={period}
-            sx={{ minWidth: 140 }}
-            onChange={(e) => handlePeriodChange(e.target.value)}
-          >
-            <MenuItem value="This Month">This Month</MenuItem>
-            <MenuItem value="Last Month">Last Month</MenuItem>
-            <MenuItem value="Last Year">Last Year</MenuItem>
-          </TextField>
-
-          <TextField
-            label="From Date"
-            type="date"
-            size="small"
-            InputLabelProps={{ shrink: true }}
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-          />
-
-          <TextField
-            label="To Date"
-            type="date"
-            size="small"
-            InputLabelProps={{ shrink: true }}
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-          />
-        </Box>
-      </Card>
-
-      {/* SUMMARY */}
-      <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
-        <Card sx={{ p: 2, minWidth: 240 }}>
-          <Typography>Total Sale</Typography>
-          <Typography variant="h5" color="success.main">
-            ₹ {totalSale.toLocaleString("en-IN")}
-          </Typography>
-        </Card>
-
-        <Card sx={{ p: 2, minWidth: 240 }}>
-          <Typography>Total Purchase</Typography>
-          <Typography variant="h5" color="error.main">
-            ₹ {totalPurchase.toLocaleString("en-IN")}
-          </Typography>
-        </Card>
+      <Box>
+        <IconButton onClick={handleDownload} sx={{ color: "#fff" }}>
+          <FileDownloadIcon />
+        </IconButton>
+        <IconButton onClick={handlePrint} sx={{ color: "#fff" }}>
+          <PrintIcon />
+        </IconButton>
       </Box>
-
-      {/* TABLE */}
-      <Card sx={{ p: 2 }}>
-        <Box display="flex" justifyContent="space-between" mb={1}>
-          <Typography variant="h6">Report</Typography>
-          <Box>
-            <IconButton onClick={handleDownload}>
-              <FileDownloadIcon />
-            </IconButton>
-            <IconButton onClick={handlePrint}>
-              <PrintIcon />
-            </IconButton>
-          </Box>
-        </Box>
-
-        <Divider sx={{ mb: 1 }} />
-
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell><b>Date</b></TableCell>
-                <TableCell><b>Sale Amount</b></TableCell>
-                <TableCell><b>Purchase Amount</b></TableCell>
-              </TableRow>
-            </TableHead>
-
-            <TableBody>
-              {rows.length === 0 && !loading && (
-                <TableRow>
-                  <TableCell colSpan={3} align="center">
-                    No data found
-                  </TableCell>
-                </TableRow>
-              )}
-
-              {rows.map((r, i) => (
-                <TableRow key={i}>
-                  <TableCell>{r.date}</TableCell>
-                  <TableCell>
-                    ₹ {r.saleAmount.toLocaleString("en-IN")}
-                  </TableCell>
-                  <TableCell>
-                    ₹ {r.purchaseAmount.toLocaleString("en-IN")}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Card>
     </Box>
-  );
+
+    {/* ================= FILTER CARD ================= */}
+    <Card
+      sx={{
+        p: 3,
+        mb: 3,
+        borderRadius: 2,
+        boxShadow: "0px 4px 14px rgba(0,0,0,0.06)",
+      }}
+    >
+      <Box display="flex" gap={3} flexWrap="wrap">
+
+        <TextField
+          label="SEARCH DATE"
+          size="small"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ minWidth: 220 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+        />
+
+        {/* <TextField
+          select
+          label="PERIOD"
+          size="small"
+          value={period}
+          sx={{ minWidth: 160 }}
+          onChange={(e) => handlePeriodChange(e.target.value)}
+        >
+          <MenuItem value="This Month">This Month</MenuItem>
+          <MenuItem value="Last Month">Last Month</MenuItem>
+          <MenuItem value="Last Year">Last Year</MenuItem>
+        </TextField> */}
+
+        <TextField
+          label="FROM"
+          type="date"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+        />
+
+        <TextField
+          label="TO"
+          type="date"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+        />
+
+      </Box>
+    </Card>
+
+    {/* ================= SUMMARY ================= */}
+    <Box display="flex" gap={3} flexWrap="wrap" mb={3}>
+
+      <Card sx={{ p: 3, borderRadius: 2, minWidth: 260 }}>
+        <Typography variant="caption" fontWeight={600} color="text.secondary">
+          TOTAL SALE
+        </Typography>
+        <Typography variant="h6" fontWeight={700} color="success.main">
+          ₹ {Number(totalSale || 0).toLocaleString("en-IN")}
+        </Typography>
+      </Card>
+
+      <Card sx={{ p: 3, borderRadius: 2, minWidth: 260 }}>
+        <Typography variant="caption" fontWeight={600} color="text.secondary">
+          TOTAL PURCHASE
+        </Typography>
+        <Typography variant="h6" fontWeight={700} color="error.main">
+          ₹ {Number(totalPurchase || 0).toLocaleString("en-IN")}
+        </Typography>
+      </Card>
+
+    </Box>
+
+    {/* ================= TABLE ================= */}
+    <Card sx={{ borderRadius: 2 }}>
+      <TableContainer>
+        <Table size="small">
+
+          <TableHead>
+            <TableRow>
+              {["DATE", "SALE AMOUNT (₹)", "PURCHASE AMOUNT (₹)"].map(
+                (header, index, arr) => (
+                  <TableCell
+                    key={header}
+                    align="center"
+                    sx={{
+                      fontWeight: 700,
+                      backgroundColor: "#f1f5f9",
+                      borderRight:
+                        index !== arr.length - 1
+                          ? "1px solid #e5e7eb"
+                          : "none",
+                    }}
+                  >
+                    {header}
+                  </TableCell>
+                )
+              )}
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {rows.length === 0 && !loading ? (
+              <TableRow>
+                <TableCell colSpan={3} align="center">
+                  No data found
+                </TableCell>
+              </TableRow>
+            ) : (
+              rows.map((r, i) => (
+                <TableRow
+                  key={i}
+                  hover
+                  sx={{
+                    "&:nth-of-type(even)": {
+                      backgroundColor: "#f9fafb",
+                    },
+                  }}
+                >
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {formatDisplayDate(r.date)}
+                  </TableCell>
+
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    ₹ {Number(r.saleAmount || 0).toLocaleString("en-IN")}
+                  </TableCell>
+
+                  <TableCell align="center">
+                    ₹ {Number(r.purchaseAmount || 0).toLocaleString("en-IN")}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+
+        </Table>
+      </TableContainer>
+    </Card>
+
+  </Box>
+);
 }
 
 export default SalesVsPurchases;

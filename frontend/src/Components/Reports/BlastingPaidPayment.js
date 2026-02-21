@@ -186,123 +186,209 @@ function BlastingPaidPayment() {
     window.open(doc.output("bloburl")).print();
   };
 
+    const formatDisplayDate = (dateString) => {
+  if (!dateString) return "";
+
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
+};
+
   return (
-    <Box p={2}>
-      <Typography variant="h5" fontWeight={700} mb={2}>
-        Blasting Paid Payments
+  <Box sx={{ width: "100%" }}>
+
+    {/* ================= HEADER STRIP ================= */}
+    <Box
+      sx={{
+        mb: 3,
+        px: 3,
+        py: 2,
+        borderRadius: 2,
+        background: "linear-gradient(90deg, #1a237e, #283593)",
+        color: "#fff",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <Typography variant="h6" fontWeight={600}>
+        BLASTING PAID PAYMENT REPORT
       </Typography>
 
-      {/* FILTERS */}
-      <Card sx={{ p: 2, mb: 2 }}>
-        <Box display="flex" gap={2} flexWrap="wrap">
-          <TextField
-            label="Search Supplier"
-            size="small"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
+      <Box>
+        <IconButton
+          onClick={handleDownloadReport}
+          sx={{ color: "#fff" }}
+        >
+          <FileDownloadIcon />
+        </IconButton>
 
-          <TextField
-            select
-            label="Period"
-            size="small"
-            value={period}
-            onChange={(e) => setPeriod(e.target.value)}
-            sx={{ minWidth: 140 }}
-          >
-            <MenuItem value="This Month">This Month</MenuItem>
-            <MenuItem value="Last Month">Last Month</MenuItem>
-            <MenuItem value="Last Year">Last Year</MenuItem>
-          </TextField>
+        <IconButton
+          onClick={handlePrintReport}
+          sx={{ color: "#fff" }}
+        >
+          <PrintIcon />
+        </IconButton>
+      </Box>
+    </Box>
 
-          <TextField
-            type="date"
-            label="From Date"
-            size="small"
-            InputLabelProps={{ shrink: true }}
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-          />
+    {/* ================= FILTER SECTION ================= */}
+    <Card
+      sx={{
+        p: 3,
+        mb: 3,
+        borderRadius: 2,
+        boxShadow: "0px 4px 14px rgba(0,0,0,0.06)",
+      }}
+    >
+      <Box display="flex" gap={3} flexWrap="wrap">
 
-          <TextField
-            type="date"
-            label="To Date"
-            size="small"
-            InputLabelProps={{ shrink: true }}
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-          />
-        </Box>
-      </Card>
+        <TextField
+          label="SEARCH SUPPLIER"
+          size="small"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ minWidth: 220 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+        />
 
-      {/* SUMMARY */}
-      <Card sx={{ p: 2, mb: 3, maxWidth: 420 }}>
-        <Typography>Total Paid Amount</Typography>
-        <Typography variant="h5" fontWeight={700} color="error.main">
-          ₹ {totalPaid.toLocaleString("en-IN")}
-        </Typography>
-        <Typography variant="body2">
-          Payments: {rows.length}
-        </Typography>
-      </Card>
+        {/* <TextField
+          select
+          label="Period"
+          size="small"
+          value={period}
+          onChange={(e) => setPeriod(e.target.value)}
+        >
+          <MenuItem value="This Month">This Month</MenuItem>
+          <MenuItem value="Last Month">Last Month</MenuItem>
+          <MenuItem value="Last Year">Last Year</MenuItem>
+        </TextField> */}
 
-      {/* TABLE */}
-      <Card sx={{ p: 2 }}>
-        <Box display="flex" justifyContent="space-between" mb={1}>
-          <Typography variant="h6">Paid Payments List</Typography>
-          <Box>
-            <IconButton onClick={handleDownloadReport}>
-              <FileDownloadIcon />
-            </IconButton>
-            <IconButton onClick={handlePrintReport}>
-              <PrintIcon />
-            </IconButton>
-          </Box>
-        </Box>
+        <TextField
+          label="FROM"
+          type="date"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+        />
 
-        <Divider sx={{ mb: 1 }} />
+        <TextField
+          label="TO"
+          type="date"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+        />
+      </Box>
+    </Card>
 
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
+    {/* ================= SUMMARY ================= */}
+    <Card sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+      <Typography variant="caption" fontWeight={600} color="text.secondary">
+        TOTAL PAID AMOUNT
+      </Typography>
+
+      <Typography variant="h6" fontWeight={700} color="error.main">
+        ₹ {totalPaid.toLocaleString("en-IN")}
+      </Typography>
+
+      <Typography variant="body2" mt={1}>
+        Payments: {rows.length}
+      </Typography>
+    </Card>
+
+    {/* ================= TABLE ================= */}
+    <Card sx={{ borderRadius: 2 }}>
+      <TableContainer>
+        <Table size="small">
+
+          <TableHead>
+            <TableRow>
+              {["SR NO", "DATE", "SUPPLIER NAME", "PAID AMOUNT (₹)"].map(
+                (header, index, arr) => (
+                  <TableCell
+                    key={header}
+                    align="center"
+                    sx={{
+                      fontWeight: 700,
+                      backgroundColor: "#f1f5f9",
+                      borderRight:
+                        index !== arr.length - 1
+                          ? "1px solid #e5e7eb"
+                          : "none",
+                    }}
+                  >
+                    {header}
+                  </TableCell>
+                )
+              )}
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {rows.length === 0 ? (
               <TableRow>
-                {["Sr No.", "Date", "Supplier Name", "Paid Amount"].map(h => (
-                  <TableCell key={h}><b>{h}</b></TableCell>
-                ))}
+                <TableCell colSpan={4} align="center">
+                  No data found
+                </TableCell>
               </TableRow>
-            </TableHead>
+            ) : (
+              rows.map((r, i) => (
+                <TableRow
+                  key={i}
+                  hover
+                  sx={{
+                    "&:nth-of-type(even)": {
+                      backgroundColor: "#f9fafb",
+                    },
+                  }}
+                >
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {i + 1}
+                  </TableCell>
 
-            <TableBody>
-              {rows.map((r, i) => (
-                <TableRow key={i}>
-                  <TableCell>{i + 1}</TableCell>
-                  <TableCell>{r.date}</TableCell>
-                  <TableCell>{r.supplierName}</TableCell>
-                  <TableCell>
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {formatDisplayDate(r.date)}
+                  </TableCell>
+
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {r.supplierName}
+                  </TableCell>
+
+                  <TableCell align="center">
                     ₹ {r.paidAmount.toLocaleString("en-IN")}
                   </TableCell>
                 </TableRow>
-              ))}
-              {!rows.length && !loading && (
-                <TableRow>
-                  <TableCell colSpan={4} align="center">
-                    No data found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Card>
-    </Box>
-  );
+              ))
+            )}
+          </TableBody>
+
+        </Table>
+      </TableContainer>
+    </Card>
+
+  </Box>
+);
 }
 
 export default BlastingPaidPayment;

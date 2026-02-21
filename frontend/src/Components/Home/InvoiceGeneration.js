@@ -7,6 +7,9 @@ import {
     TextField,
     Button,
     MenuItem,
+    FormControl,
+    InputLabel,
+    Select,
 } from "@mui/material";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -69,6 +72,8 @@ function InvoicePage() {
     const [selectedMaterialId, setSelectedMaterialId] = useState("");
     const [materials, setMaterials] = useState([]);
     const [villages, setVillages] = useState([])
+    const [selectedVillageDistance, setSelectedVillageDistance] = useState("");
+
 
     const [vehicles, setVehicles] = useState([]);
     const [selectedVehicleId, setSelectedVehicleId] = useState("");
@@ -81,6 +86,12 @@ function InvoicePage() {
     const [saved, setSaved] = useState(false);
     const [pdfBlob, setPdfBlob] = useState(null);
 
+    const [rates, setRates] = useState({});
+    // 🔥 ADD THIS STATE (place with other states)
+    const [amountError, setAmountError] = useState("");
+
+
+
 
 
 
@@ -89,8 +100,8 @@ function InvoicePage() {
         customerContact: "",
         customerAddress: "",
         item: "20MM",
-        brass: 6,
-        rate: 18000,
+        brass: 0,
+        amount: 0,
         vehicleNo: "SWARAJ",
         paymentType: "Credit", // ✅ NEW
     });
@@ -127,8 +138,31 @@ function InvoicePage() {
             .then((res) => res.json())
             .then((data) => setVehicles(data))
             .catch(() => alert("Failed to load vehicles"));
+        fetch("http://localhost:8000/api/rates/")
+            .then(res => res.json())
+            .then(data => {
+                const rateMap = {};
+                data.forEach(r => {
+                    rateMap[r.name] = Number(r.rate);
+                });
+                setRates(rateMap);
+            });
+
 
     }, []);
+
+    const materialRate = rates[invoiceData.item] || 0;
+    const kmRate = rates["KILO METER"] || 0;
+
+    const brassValue = Number(invoiceData.brass || 0);
+    const distanceValue = Number(selectedVillageDistance || 0);
+
+    const materialAmount = brassValue * materialRate;
+    const transportAmount = distanceValue * kmRate;
+
+    const minimumAmount = materialAmount + transportAmount;
+
+
 
 
     const handleCustomerSelect = (e) => {
@@ -147,10 +181,38 @@ function InvoicePage() {
 
 
     const handleChange = (e) => {
-        setInvoiceData({ ...invoiceData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+
+        let updatedData = {
+            ...invoiceData,
+            [name]: value,
+        };
+
+        const materialRate = rates[
+            name === "item" ? value : updatedData.item
+        ] || 0;
+
+        const kmRate = rates["KILO METER"] || 0;
+
+        const brassValue =
+            name === "brass"
+                ? Number(value || 0)
+                : Number(updatedData.brass || 0);
+
+        const distanceValue = Number(selectedVillageDistance || 0);
+
+        const materialAmount = brassValue * materialRate;
+        const transportAmount = distanceValue * kmRate;
+
+        updatedData.amount = materialAmount + transportAmount;
+
+        setAmountError(""); // clear error on recalculation
+        setInvoiceData(updatedData);
     };
 
-    const amount = invoiceData.brass * invoiceData.rate;
+
+
+    // const amount = invoiceData.brass * invoiceData.rate;
 
     const generatePDF = async () => {
         const input = document.getElementById("invoice");
@@ -205,7 +267,7 @@ function InvoicePage() {
             if (!selectedVehicleId) missingFields.push("Vehicle");
             if (!invoiceData.item) missingFields.push("Material");
             if (!invoiceData.brass) missingFields.push("Quantity");
-            if (!amount) missingFields.push("Amount");
+            if (!invoiceData.amount) missingFields.push("Amount");
             if (!selectedMrId) missingFields.push("MR");
             if (!invoiceData.paymentType) missingFields.push("Payment Type");
 
@@ -213,6 +275,14 @@ function InvoicePage() {
                 alert("Missing Fields: " + missingFields.join(", "));
                 return;
             }
+
+            // 🔴 Final Amount Validation
+            if (Number(invoiceData.amount) < minimumAmount) {
+                setAmountError(`Minimum amount should be ₹ ${minimumAmount}`);
+                alert(`Amount cannot be less than ₹ ${minimumAmount}`);
+                return;
+            }
+
             // 1️⃣ Generate PDF ONCE
             const { blob } = await generatePDF();
 
@@ -224,7 +294,7 @@ function InvoicePage() {
             formData.append("vehicle", selectedVehicleId);
             formData.append("material", invoiceData.item);
             formData.append("quantity", invoiceData.brass);
-            formData.append("amount", amount);
+            formData.append("amount", invoiceData.amount);
             formData.append("mr", selectedMrId);
             formData.append("payment_type", invoiceData.paymentType);
             formData.append("bill_doc", blob, `${billNumber}.pdf`);
@@ -275,58 +345,67 @@ function InvoicePage() {
             {/* FORM */}
             <Paper sx={{ p: 3, mb: 4 }}>
                 <Typography variant="h6" fontWeight={600} mb={2}>
-                    Enter Invoice Details
+                    ENTER INVOICE DETAILS
                 </Typography>
 
                 <Grid container spacing={2}>
                     <Grid item xs={6}>
                         <TextField
-                            select
-                            fullWidth
-                            label="Customer Name"
-                            value={selectedCustomerId}
-                            onChange={(e) => {
-                                const value = e.target.value;
+  select
+  fullWidth
+  label="CUSTOMER NAME"
+  value={selectedCustomerId || ""}
+  onChange={(e) => {
+    const value = e.target.value;
 
-                                // ➕ Redirect to Add Customer
-                                if (value === "__add_customer__") {
-                                    navigate("home/add-customer");
-                                    return;
-                                }
+    if (value === "__add_customer__") {
+      navigate("home/add-customer");
+      return;
+    }
 
-                                const customer = customers.find(c => c.id === value);
-                                if (!customer) return;
+    const customer = customers.find(c => c.id === value);
+    if (!customer) return;
 
-                                setSelectedCustomerId(value);
-                                setInvoiceData(prev => ({
-                                    ...prev,
-                                    customerName: customer.name,
-                                    customerContact: customer.contact,
-                                    customerAddress: customer.address,
-                                }));
-                            }}
-                        >
-                            {/* ➕ ADD CUSTOMER OPTION */}
-                            <MenuItem
-                                value="__add_customer__"
-                                sx={{
-                                    fontWeight: 600,
-                                    color: "primary.main",
-                                }}
-                            >
-                                ➕ Add New Customer
-                            </MenuItem>
+    setSelectedCustomerId(value);
+    setInvoiceData(prev => ({
+      ...prev,
+      customerName: customer.name,
+      customerContact: customer.contact,
+      customerAddress: customer.address,
+    }));
+  }}
+  InputLabelProps={{ shrink: true }}   // ✅ SAME AS VILLAGE
+  SelectProps={{ displayEmpty: true }} // ✅ SAME AS VILLAGE
+  sx={{
+    "& .MuiOutlinedInput-root": {
+      minHeight: 56,                  // ✅ SAME HEIGHT
+    },
+    "& .MuiInputLabel-root": {
+      fontWeight: 700,                // ✅ BOLD LABEL
+    },
+  }}
+>
+  <MenuItem value="">
+    <em>Select Customer</em>
+  </MenuItem>
 
-                            {/* <Divider /> */}
+  <MenuItem
+    value="__add_customer__"
+    sx={{ fontWeight: 600, color: "primary.main" }}
+  >
+    ➕ Add New Customer
+  </MenuItem>
 
-                            {/* EXISTING CUSTOMERS */}
-                            {customers.map(c => (
-                                <MenuItem key={c.id} value={c.id}>
-                                    {c.name}
-                                </MenuItem>
-                            ))}
-                        </TextField>
+  {customers.map(c => (
+    <MenuItem key={c.id} value={c.id}>
+      {c.name}
+    </MenuItem>
+  ))}
+</TextField>
                     </Grid>
+
+
+
 
 
                     {/* <Grid item xs={6}>
@@ -348,20 +427,70 @@ function InvoicePage() {
                             onChange={handleChange}
                         />
                     </Grid> */}
+
                     <Grid item xs={3}>
                         <TextField
                             select
                             fullWidth
-                            label="Village"
-                            value={selectedVillageId}
+                            label="VILLAGE"
+                            value={selectedVillageId || ""}
                             onChange={(e) => {
-                                const id = e.target.value;
-                                const village = villages.find(v => v.id === id);
+                                const value = e.target.value;
 
-                                setSelectedVillageId(id);
-                                setSelectedVillageName(village?.name || "");
+                                // ➕ Redirect to Add Village page
+                                if (value === "__add_village__") {
+                                    navigate("/add-village");
+                                    return;
+                                }
+
+                                const village = villages.find(v => v.id === value);
+                                if (!village) return;
+
+                                setSelectedVillageId(value);
+                                setSelectedVillageName(village.name);
+
+                                const distance = Number(village.approx_distance || 0);
+                                setSelectedVillageDistance(distance);
+
+                                const materialRate = rates[invoiceData.item] || 0;
+                                const kmRate = rates["KILO METER"] || 0;
+                                const brassValue = Number(invoiceData.brass || 0);
+
+                                const materialAmount = brassValue * materialRate;
+                                const transportAmount = distance * kmRate;
+
+                                setInvoiceData(prev => ({
+                                    ...prev,
+                                    amount: materialAmount + transportAmount
+                                }));
+
+                                setAmountError("");
+                            }}
+                            InputLabelProps={{ shrink: true }}
+                            SelectProps={{ displayEmpty: true }}
+                            sx={{
+                                "& .MuiOutlinedInput-root": {
+                                    minHeight: 56,
+                                },
+                                "& .MuiInputLabel-root": {
+                                    fontWeight: 700,
+                                },
                             }}
                         >
+                            {/* Default Placeholder */}
+                            <MenuItem value="">
+                                <em>Select Village</em>
+                            </MenuItem>
+
+                            {/* ➕ ADD VILLAGE OPTION */}
+                            <MenuItem
+                                value="__add_village__"
+                                sx={{ fontWeight: 600, color: "primary.main" }}
+                            >
+                                ➕ Add New Village
+                            </MenuItem>
+
+                            {/* Existing Villages */}
                             {villages.map(v => (
                                 <MenuItem key={v.id} value={v.id}>
                                     {v.name}
@@ -369,47 +498,101 @@ function InvoicePage() {
                             ))}
                         </TextField>
 
+                        {/* Show Distance */}
+                        {selectedVillageDistance && (
+                            <Typography
+                                variant="body2"
+                                sx={{ mt: 1, fontWeight: 600, color: "primary.main" }}
+                            >
+                                Approx Distance: {selectedVillageDistance} KM
+                            </Typography>
+                        )}
                     </Grid>
 
 
                     <Grid item xs={3}>
                         <TextField
                             fullWidth
-                            label="Item"
+                            label="ITEM"
                             name="item"
                             value={invoiceData.item}
                             onChange={handleChange}
+                            InputLabelProps={{ shrink: true }}
+                            sx={{
+                                "& .MuiInputLabel-root": {
+                                    fontWeight: 700,   // ✅ Bold Label
+                                },
+                                "& .MuiOutlinedInput-root": {
+                                    minHeight: 56,
+                                },
+                            }}
                         />
                     </Grid>
 
                     <Grid item xs={3}>
                         <TextField
                             fullWidth
-                            label="Brass"
+                            label="BRASS"
                             type="number"
                             name="brass"
                             value={invoiceData.brass}
                             onChange={handleChange}
+                            InputLabelProps={{ shrink: true }}
+                            sx={{
+                                "& .MuiInputLabel-root": {
+                                    fontWeight: 700,   // ✅ Bold Label
+                                },
+                                "& .MuiOutlinedInput-root": {
+                                    minHeight: 56,
+                                },
+                            }}
                         />
                     </Grid>
+
 
                     <Grid item xs={3}>
                         <TextField
                             fullWidth
-                            label="Rate"
+                            label="AMOUNT"
                             type="number"
-                            name="rate"
-                            value={invoiceData.rate}
-                            onChange={handleChange}
+                            name="amount"
+                            value={invoiceData.amount}
+                            onChange={(e) => {
+                                const value = e.target.value;
+
+                                setInvoiceData(prev => ({
+                                    ...prev,
+                                    amount: value,
+                                }));
+
+                                if (Number(value) < minimumAmount) {
+                                    setAmountError(
+                                        `Minimum amount should be ₹ ${minimumAmount}`
+                                    );
+                                } else {
+                                    setAmountError("");
+                                }
+                            }}
+                            error={Boolean(amountError)}
+                            helperText={amountError}
+                            sx={{
+                                "& .MuiOutlinedInput-root": {
+                                    minHeight: 56,
+                                },
+                                "& .MuiInputLabel-root": {
+                                    fontWeight: 700,
+                                },
+                            }}
                         />
                     </Grid>
+
 
                     <Grid item xs={3}>
                         <TextField
                             select
                             fullWidth
-                            label="Vehicle No"
-                            value={selectedVehicleId}
+                            label="VEHICLE NO"
+                            value={selectedVehicleId || ""}
                             onChange={(e) => {
                                 const id = e.target.value;
                                 const vehicle = vehicles.find(v => v.id === id);
@@ -420,6 +603,21 @@ function InvoicePage() {
                                     ...prev,
                                     vehicleNo: vehicle?.vehicle_number || "",
                                 }));
+                            }}
+                            InputLabelProps={{ shrink: true }}
+                            SelectProps={{ displayEmpty: true }}
+                            sx={{
+                                minWidth: 180,   // 👈 Added minimum width
+                                "& .MuiOutlinedInput-root": {
+                                    width: "100%",
+                                    minHeight: 56,
+                                },
+                                "& .MuiInputBase-root": {
+                                    width: "100%",
+                                },
+                                "& .MuiInputLabel-root": {
+                                    fontWeight: 700,
+                                },
                             }}
                         >
                             <MenuItem value="">
@@ -432,21 +630,37 @@ function InvoicePage() {
                                 </MenuItem>
                             ))}
                         </TextField>
-
                     </Grid>
+
+
 
                     <Grid item xs={3}>
                         <TextField
                             select
                             fullWidth
-                            label="MR Name"
-                            value={selectedMrId}
+                            label="MR NAME"
+                            value={selectedMrId || ""}
                             onChange={(e) => {
                                 const mrId = e.target.value;
                                 const mr = mrs.find((m) => m.id === mrId);
 
                                 setSelectedMrId(mrId);
                                 setSelectedMrName(mr?.name || "");
+                            }}
+                            InputLabelProps={{ shrink: true }}
+                            SelectProps={{ displayEmpty: true }}
+                            sx={{
+                                minWidth: 180,   // 👈 Added minimum width
+                                "& .MuiOutlinedInput-root": {
+                                    width: "100%",
+                                    minHeight: 56,
+                                },
+                                "& .MuiInputBase-root": {
+                                    width: "100%",
+                                },
+                                "& .MuiInputLabel-root": {
+                                    fontWeight: 700,
+                                },
                             }}
                         >
                             <MenuItem value="">
@@ -460,6 +674,8 @@ function InvoicePage() {
                             ))}
                         </TextField>
                     </Grid>
+
+
 
 
                     {/* ✅ PAYMENT TYPE */}
@@ -493,19 +709,22 @@ function InvoicePage() {
                 {/* HEADER */}
                 <Box textAlign="center" mb={1}>
                     <Typography variant="h5" fontWeight={800}>
-                        MEGHANA CONSTRUCTIONS
+                        MEGHANA STONE CRUSHER & M SAND
                     </Typography>
-                    <Typography fontWeight={600}>
+                    {/* <Typography fontWeight={600}>
                         STONE CRUSHER & M SAND
-                    </Typography>
+                    </Typography> */}
                     <Typography variant="body2">
-                        Manufacturer of Stone M20, M40, All Mix, M Sand & Dust
+                        {/* Manufacturer of Stone M20, M40, All Mix, M Sand & Dust */}
+                        MANUFACTURER OF STONE M20, M40, ALL MIX, M SAND & DUST
                     </Typography>
                     <Typography variant="caption" display="block">
-                        Chimegaon, Tq. Kamalanagar, Dist. Bidar, Karnataka - 585417
+                        CHIMEGAON, TQ. KAMALANAGAR, DIST. BIDAR, KARNATAKA - 585417
+                        {/* Chimegaon, Tq. Kamalanagar, Dist. Bidar, Karnataka - 585417 */}
                     </Typography>
                     <Typography variant="caption" display="block">
-                        Email: meghanaconstructions12@gmail.com &nbsp; Contact No: 6360589990
+                        EMAIL: MEGHANACONSTRUCTIONS12@GMAIL.COM &nbsp; CONTACT NO: 6360589990
+                        {/* Email: meghanaconstructions12@gmail.com &nbsp; Contact No: 6360589990 */}
                     </Typography>
                 </Box>
 
@@ -514,23 +733,23 @@ function InvoicePage() {
                 {/* BILL INFO */}
                 <Box display="flex" border="1px solid #000">
                     <Box flex={1} p={1} borderRight="1px solid #000">
-                        <Typography fontWeight={600}>To,</Typography>
-                        <Typography>{invoiceData.customerName || "Customer Name"}</Typography>
-                        <Typography>{selectedVillageName || "Village Name"}</Typography>
+                        <Typography fontWeight={600}>TO,</Typography>
+                        <Typography>{invoiceData.customerName || "CUSTOMER NAME"}</Typography>
+                        <Typography>{selectedVillageName || "VILLAGE NAME"}</Typography>
                         {/* <Typography>{villages.customerAddress || "Customer Address"}</Typography> */}
                     </Box>
 
                     <Box flex={1} p={1}>
                         <Typography>
-                            Bill No : <b>{billNumber}</b>
+                            BILL NO : <b>{billNumber}</b>
                         </Typography>
-                        <Typography>Date : {new Date().toLocaleDateString()}</Typography>
-                        <Typography>Vehicle No : {invoiceData.vehicleNo}</Typography>
-                        <Typography>GST No : 29AZVPB1008H1ZG</Typography>
+                        <Typography>DATE : {new Date().toLocaleDateString()}</Typography>
+                        <Typography>VEHICLE NO : {invoiceData.vehicleNo}</Typography>
+                        <Typography>GST NO : 29AZVPB1008H1ZG</Typography>
 
                         {/* ✅ PAYMENT TYPE SHOWN IN BILL */}
                         <Typography >
-                            Mr Name : {selectedMrName || "MR Name"}
+                            MR NAME : {selectedMrName || "MR Name"}
                         </Typography>
                     </Box>
                 </Box>
@@ -545,7 +764,7 @@ function InvoicePage() {
                 >
                     <thead>
                         <tr>
-                            {["Sr.No", "Particulars", "Brass", "Rate", "Amount"].map((h) => (
+                            {["SR.NO", "PARTICULARS", "BRASS", "AMOUNT"].map((h) => (
                                 <th
                                     key={h}
                                     style={{
@@ -569,24 +788,24 @@ function InvoicePage() {
                                 {invoiceData.brass}
                             </td>
                             <td style={{ border: "1px solid #000", textAlign: "center" }}>
-                                {invoiceData.rate}
+                                {invoiceData.amount}
                             </td>
-                            <td style={{ border: "1px solid #000", textAlign: "center" }}>
+                            {/* <td style={{ border: "1px solid #000", textAlign: "center" }}>
                                 {amount}
-                            </td>
+                            </td> */}
                         </tr>
                     </tbody>
                 </table>
 
                 {/* TOTALS */}
                 <Box display="flex" justifyContent="flex-end" mt={1}>
-                    <table style={{ width: "40%", borderCollapse: "collapse" }}>
+                    <table style={{ width: "40%", borderCollapse: "collapse", textAlign: "center" }}>
                         {[
-                            ["Sub Total", amount],
+                            ["SUB TOTAL", invoiceData.amount],
                             ["CGST", 0],
                             ["SGST", 0],
                             ["IGST", 0],
-                            ["Grand Total", amount],
+                            ["GRAND TOTAL", invoiceData.amount],
                         ].map(([label, value]) => (
                             <tr key={label}>
                                 <td style={{ border: "1px solid #000", padding: 6 }}>
@@ -598,6 +817,7 @@ function InvoicePage() {
                                         padding: 6,
                                         textAlign: "right",
                                         fontWeight: label === "Grand Total" ? 700 : 400,
+                                        textAlign: "center"
                                     }}
                                 >
                                     {value}
@@ -610,14 +830,14 @@ function InvoicePage() {
                 {/* SIGNATURES */}
                 <Box display="flex" justifyContent="space-between" mt={6}>
                     <Box textAlign="center">
-                        <Box sx={{ borderTop: "1px solid #000", width: 200 }} />
-                        <Typography>Receiver Signature</Typography>
+                        <Box sx={{ width: 200 }} />
+                        <Typography>RECEIVER SIGNATURE</Typography>
                     </Box>
 
                     <Box textAlign="center">
-                        <Typography fontWeight={600}>For MEGHANA CONSTRUCTION</Typography>
-                        <Box sx={{ borderTop: "1px solid #000", width: 200, mt: 2 }} />
-                        <Typography>Authorised Signature</Typography>
+                        <Typography fontWeight={600}>FOR MEGHANA CONSTRUCTION</Typography>
+                        <Box sx={{ width: 200, mt: 2 }} />
+                        <Typography>AUTHORISED SIGNATURE</Typography>
                     </Box>
                 </Box>
             </Paper>

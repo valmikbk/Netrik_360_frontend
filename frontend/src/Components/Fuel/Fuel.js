@@ -13,27 +13,50 @@ import LocalGasStationIcon from "@mui/icons-material/LocalGasStation";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 
 import Header from "../Header/Header";
-
 import FuelIn from "./FuelIn";
 import FuelOut from "./FuelOut";
 import TotalFuelIn from "./TotalFuelIn";
 
 const drawerWidth = 260;
 
+/* ================= MASTER STYLE NAV ================= */
 const navItemStyle = (active) => ({
-  m: 1,
+  mx: 2,
+  my: 1.8,
   borderRadius: 2,
-  backgroundColor: active ? "#e3f2fd" : "#ffffff",
-  border: "1px solid #e0e0e0",
+
+  background: active
+    ? "linear-gradient(145deg, #1361e7, #0d47a1)"
+    : "linear-gradient(145deg, #1976d2, #1565c0)",
+
+  color: "#ffffff",
+
+  border: active
+    ? "2px solid #00e676"
+    : "1px solid rgba(255,255,255,0.2)",
+
   boxShadow: active
-    ? "inset 0px 3px 6px rgba(0,0,0,0.25)"
-    : "0px 4px 8px rgba(0,0,0,0.15)",
-  transition: "all 0.25s ease",
+    ? "0 0 12px rgba(0,230,118,0.6)"
+    : "0 4px 8px rgba(0,0,0,0.15)",
+
+  padding: "12px 14px",
+
+  transition: "all 0.3s ease",
 
   "&:hover": {
-    boxShadow: "0px 8px 16px rgba(0,0,0,0.25)",
     transform: "translateY(-2px)",
-    backgroundColor: "#f9fafb",
+    boxShadow: "0 0 16px rgba(25,118,210,0.6)",
+  },
+
+  "& .MuiListItemIcon-root": {
+    color: "#ffffff",
+    minWidth: 40,
+  },
+
+  "& .MuiListItemText-primary": {
+    fontWeight: 700,
+    fontSize: "0.95rem",
+    letterSpacing: "0.5px",
   },
 });
 
@@ -55,6 +78,7 @@ function Fuel() {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+      {/* Header */}
       <Header />
 
       <Box sx={{ display: "flex", flexGrow: 1, zIndex:0 }}>
@@ -66,30 +90,21 @@ function Fuel() {
             "& .MuiDrawer-paper": {
               width: drawerWidth,
               backgroundColor: "#f5f6fa",
+              borderRight: "1px solid #e0e0e0",
             },
           }}
         >
           <Toolbar />
 
-          <List>
-            {/* <ListItemButton
-              sx={navItemStyle(activePage === "in")}
-              onClick={() => setActivePage("in")}
-            >
-              <ListItemIcon>
-                <LocalGasStationIcon color="primary" />
-              </ListItemIcon>
-              <ListItemText primary="Fuel In" />
-            </ListItemButton> */}
-
+          <List sx={{ mt: 7 }}>
             <ListItemButton
               sx={navItemStyle(activePage === "total")}
               onClick={() => setActivePage("total")}
             >
               <ListItemIcon>
-                <LocalGasStationIcon color="primary" />
+                <LocalGasStationIcon />
               </ListItemIcon>
-              <ListItemText primary="Fuel In" />
+              <ListItemText primary="FUEL IN" />
             </ListItemButton>
 
             <ListItemButton
@@ -97,11 +112,10 @@ function Fuel() {
               onClick={() => setActivePage("out")}
             >
               <ListItemIcon>
-                <TrendingDownIcon color="error" />
+                <TrendingDownIcon />
               </ListItemIcon>
-              <ListItemText primary="Fuel Out" />
+              <ListItemText primary="FUEL OUT" />
             </ListItemButton>
-
           </List>
         </Drawer>
 
@@ -110,7 +124,7 @@ function Fuel() {
           component="main"
           sx={{
             flexGrow: 1,
-            p: 3,
+            p: 4,
             backgroundColor: "#fafafa",
             overflow: "auto",
           }}

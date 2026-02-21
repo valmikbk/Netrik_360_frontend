@@ -74,26 +74,18 @@ const generateDailyPurchasePDF = async ({
   doc.text(`To : ${toDate}`, 80, 44);
 
   autoTable(doc, {
-    startY: 52,
-    head: [[
-      "Date",
-      "Item Name",
-      "Quantity",
-      "Price / Unit",
-      "Amount (₹)",
-    ]],
-    body: rows.map((r) => [
-      r.date,
-      r.itemName,
-      r.qty,
-      r.pricePerUnit,
-      r.amount.toLocaleString("en-IN"),
-    ]),
-    theme: "grid",
-    styles: { fontSize: 9 },
-    headStyles: { fillColor: primary, textColor: 255 },
-    columnStyles: { 4: { halign: "right" } },
-  });
+  startY: 52,
+  head: [["Date", "Item Name", "Amount (₹)"]],
+  body: rows.map((r) => [
+    new Date(r.date).toLocaleDateString("en-GB"),
+    r.itemName,
+    Number(r.amount || 0).toLocaleString("en-IN"),
+  ]),
+  theme: "grid",
+  styles: { fontSize: 9 },
+  headStyles: { fillColor: primary, textColor: 255 },
+  columnStyles: { 2: { halign: "right" } },
+});
 
   doc.setFont("helvetica", "bold");
   doc.text(
@@ -165,10 +157,11 @@ function DailyPurchase() {
   }, [fromDate, toDate, search]);
 
   /* ------------------ SUMMARY ------------------ */
-  const totalPurchase = useMemo(
-    () => rows.reduce((s, r) => s + r.amount, 0),
-    [rows]
-  );
+ const totalPurchase = useMemo(
+  () =>
+    rows.reduce((s, r) => s + Number(r.amount || 0), 0),
+  [rows]
+);
 
   /* ------------------ ACTIONS ------------------ */
   const handleDownload = async () => {
@@ -191,123 +184,205 @@ function DailyPurchase() {
     window.open(doc.output("bloburl")).print();
   };
 
-  return (
-    <Box p={2}>
-      <Typography variant="h5" fontWeight={700} mb={2}>
-        Daily Purchase
+ return (
+  <Box sx={{ width: "100%" }}>
+
+    {/* ================= HEADER STRIP ================= */}
+    <Box
+      sx={{
+        mb: 3,
+        px: 3,
+        py: 2,
+        borderRadius: 2,
+        background: "linear-gradient(90deg, #1a237e, #283593)",
+        color: "#fff",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <Typography variant="h6" fontWeight={600}>
+        DAILY PURCHASE REPORT
       </Typography>
 
-      {/* FILTERS */}
-      <Card sx={{ p: 2, mb: 2 }}>
-        <Box display="flex" gap={2} flexWrap="wrap">
-          <TextField
-            label="Search Item"
-            size="small"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
+      <Box>
+         <IconButton onClick={handleDownload} sx={{ color: "#fff" }}>
+          <FileDownloadIcon />
+        </IconButton>
 
-          <TextField
-            select
-            label="Period"
-            size="small"
-            value={period}
-            sx={{ minWidth: 140 }}
-            onChange={(e) => setPeriod(e.target.value)}
-          >
-            <MenuItem value="This Month">This Month</MenuItem>
-            <MenuItem value="Last Month">Last Month</MenuItem>
-            <MenuItem value="Last Year">Last Year</MenuItem>
-          </TextField>
+        <IconButton onClick={handlePrint} sx={{ color: "#fff" }}>
+          <PrintIcon />
+        </IconButton>
+      </Box>
+    </Box>
 
-          <TextField
-            label="From Date"
-            type="date"
-            size="small"
-            InputLabelProps={{ shrink: true }}
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-          />
+    {/* ================= FILTER SECTION ================= */}
+    <Card
+      sx={{
+        p: 3,
+        mb: 3,
+        borderRadius: 2,
+        boxShadow: "0px 4px 14px rgba(0,0,0,0.06)",
+      }}
+    >
+      <Box display="flex" gap={3} flexWrap="wrap">
 
-          <TextField
-            label="To Date"
-            type="date"
-            size="small"
-            InputLabelProps={{ shrink: true }}
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-          />
-        </Box>
-      </Card>
+        <TextField
+          label="SEARCH ITEM"
+          size="small"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ minWidth: 240 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+        />
 
-      {/* SUMMARY */}
-      <Card sx={{ p: 2, mb: 3, maxWidth: 420 }}>
-        <Typography>Total Purchase</Typography>
-        <Typography variant="h5" fontWeight={700} color="error.main">
-          ₹ {totalPurchase.toLocaleString("en-IN")}
-        </Typography>
-        <Typography variant="body2" mt={1}>
-          Entries: {rows.length}
-        </Typography>
-      </Card>
+        {/* <TextField
+          select
+          label="Period"
+          size="small"
+          value={period}
+          onChange={(e) => setPeriod(e.target.value)}
+        >
+          <MenuItem value="This Month">This Month</MenuItem>
+          <MenuItem value="Last Month">Last Month</MenuItem>
+          <MenuItem value="Last Year">Last Year</MenuItem>
+        </TextField> */}
 
-      {/* TABLE */}
-      <Card sx={{ p: 2 }}>
-        <Box display="flex" justifyContent="space-between" mb={1}>
-          <Typography variant="h6">Purchase List</Typography>
-          <Box>
-            <IconButton onClick={handleDownload}>
-              <FileDownloadIcon />
-            </IconButton>
-            <IconButton onClick={handlePrint}>
-              <PrintIcon />
-            </IconButton>
-          </Box>
-        </Box>
+        <TextField
+          label="FROM"
+          type="date"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+        />
 
-        <Divider sx={{ mb: 1 }} />
+        <TextField
+          label="TO"
+          type="date"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+        />
+      </Box>
+    </Card>
 
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                {["Date", "Item Name", "Qty", "Price / Unit", "Amount"].map(h => (
-                  <TableCell key={h}><b>{h}</b></TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
+    {/* ================= SUMMARY ================= */}
+    <Card sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+      <Typography variant="caption" fontWeight={600} color="text.secondary">
+        TOTAL PURCHASE
+      </Typography>
 
-            <TableBody>
-              {rows.map((r, i) => (
-                <TableRow key={i}>
-                  <TableCell>{r.date}</TableCell>
-                  <TableCell>{r.itemName}</TableCell>
-                  <TableCell>{r.qty}</TableCell>
-                  <TableCell>{r.pricePerUnit}</TableCell>
-                  <TableCell>₹ {r.amount.toLocaleString("en-IN")}</TableCell>
-                </TableRow>
+      <Typography variant="h6" fontWeight={700} color="error.main">
+        ₹ {totalPurchase.toLocaleString("en-IN")}
+      </Typography>
+
+      <Typography variant="body2" mt={1}>
+        Entries: {rows.length}
+      </Typography>
+    </Card>
+
+    {/* ================= TABLE ================= */}
+    <Card sx={{ borderRadius: 2 }}>
+      <TableContainer>
+        <Table size="small">
+
+          <TableHead>
+            <TableRow>
+              {[
+                "DATE",
+                "ITEM NAME",
+                // "QTY",
+                // "PRICE / UNIT",
+                "AMOUNT (₹)",
+              ].map((header, index, arr) => (
+                <TableCell
+                  key={header}
+                  align="center"
+                  sx={{
+                    fontWeight: 700,
+                    backgroundColor: "#f1f5f9",
+                    borderRight:
+                      index !== arr.length - 1
+                        ? "1px solid #e5e7eb"
+                        : "none",
+                  }}
+                >
+                  {header}
+                </TableCell>
               ))}
+            </TableRow>
+          </TableHead>
 
-              {!rows.length && !loading && (
-                <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    No data found
+          <TableBody>
+            {rows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={3} align="center">
+                  No data found
+                </TableCell>
+              </TableRow>
+            ) : (
+              rows.map((r, i) => (
+                <TableRow
+                  key={i}
+                  hover
+                  sx={{
+                    "&:nth-of-type(even)": {
+                      backgroundColor: "#f9fafb",
+                    },
+                  }}
+                >
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {r.date
+                      ? new Date(r.date).toLocaleDateString("en-GB")
+                      : ""}
+                  </TableCell>
+
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {r.itemName}
+                  </TableCell>
+
+                  {/* <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {r.qty}
+                  </TableCell> */}
+
+                  {/* <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    ₹ {r.pricePerUnit}
+                  </TableCell> */}
+
+                  <TableCell align="center">
+                    ₹ {Number(r.amount || 0).toLocaleString("en-IN")}
                   </TableCell>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Card>
-    </Box>
-  );
+              ))
+            )}
+          </TableBody>
+
+        </Table>
+      </TableContainer>
+    </Card>
+
+  </Box>
+);
 }
 
 export default DailyPurchase;

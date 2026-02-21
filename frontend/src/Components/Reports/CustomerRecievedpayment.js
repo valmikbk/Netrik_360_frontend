@@ -194,127 +194,206 @@ function CustomerReceivedPayment() {
     window.open(doc.output("bloburl")).print();
   };
 
-  return (
-    <Box p={2}>
-      <Typography variant="h5" fontWeight={700} mb={2}>
-        Customer Received Payments
+ return (
+  <Box sx={{ width: "100%" }}>
+
+    {/* ================= HEADER STRIP ================= */}
+    <Box
+      sx={{
+        mb: 3,
+        px: 3,
+        py: 2,
+        borderRadius: 2,
+        background: "linear-gradient(90deg, #1a237e, #283593)",
+        color: "#fff",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <Typography variant="h6" fontWeight={600}>
+        CUSTOMER RECEIVED PAYMENT REPORT
       </Typography>
 
-      {/* FILTERS */}
-      <Card sx={{ p: 2, mb: 2 }}>
-        <Box display="flex" gap={2} flexWrap="wrap">
-          <TextField
-            label="Search Customer / Phone"
-            size="small"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
+      <Box>
+        <IconButton onClick={handleDownloadReport} sx={{ color: "#fff" }}>
+          <FileDownloadIcon />
+        </IconButton>
+        
+        <IconButton onClick={handlePrintReport} sx={{ color: "#fff" }}>
+          <PrintIcon />
+        </IconButton>
+      </Box>
+    </Box>
 
-          <TextField
-            select
-            label="Period"
-            size="small"
-            value={period}
-            sx={{ minWidth: 140 }}
-            onChange={(e) => setPeriod(e.target.value)}
-          >
-            <MenuItem value="This Month">This Month</MenuItem>
-            <MenuItem value="Last Month">Last Month</MenuItem>
-            <MenuItem value="Last Year">Last Year</MenuItem>
-          </TextField>
+    {/* ================= FILTER SECTION ================= */}
+    <Card
+      sx={{
+        p: 3,
+        mb: 3,
+        borderRadius: 2,
+        boxShadow: "0px 4px 14px rgba(0,0,0,0.06)",
+      }}
+    >
+      <Box display="flex" gap={3} flexWrap="wrap">
 
-          <TextField
-            label="From Date"
-            size="small"
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-          />
+        <TextField
+          label="SEARCH CUSTOMER / PHONE"
+          size="small"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ minWidth: 240 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+        />
 
-          <TextField
-            label="To Date"
-            size="small"
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-          />
-        </Box>
-      </Card>
+        {/* <TextField
+          select
+          label="Period"
+          size="small"
+          value={period}
+          onChange={(e) => setPeriod(e.target.value)}
+        >
+          <MenuItem value="This Month">This Month</MenuItem>
+          <MenuItem value="Last Month">Last Month</MenuItem>
+          <MenuItem value="Last Year">Last Year</MenuItem>
+        </TextField> */}
 
-      {/* SUMMARY */}
-      <Card sx={{ p: 2, mb: 3, maxWidth: 420 }}>
-        <Typography>Total Received</Typography>
-        <Typography variant="h5" fontWeight={700} color="success.main">
-          ₹ {totalReceived.toLocaleString("en-IN")}
-        </Typography>
-        <Typography variant="body2" mt={1}>
-          Transactions: {rows.length}
-        </Typography>
-      </Card>
+        <TextField
+          label="FROM"
+          type="date"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+        />
 
-      {/* TABLE */}
-      <Card sx={{ p: 2 }}>
-        <Box display="flex" justifyContent="space-between" mb={1}>
-          <Typography variant="h6">Received Payment List</Typography>
-          <Box>
-            <IconButton onClick={handleDownloadReport}>
-              <FileDownloadIcon />
-            </IconButton>
-            <IconButton onClick={handlePrintReport}>
-              <PrintIcon />
-            </IconButton>
-          </Box>
-        </Box>
+        <TextField
+          label="TO"
+          type="date"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+        />
+      </Box>
+    </Card>
 
-        <Divider sx={{ mb: 1 }} />
+    {/* ================= SUMMARY ================= */}
+    <Card sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+      <Typography variant="caption" fontWeight={600} color="text.secondary">
+        TOTAL RECEIVED
+      </Typography>
 
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
+      <Typography variant="h6" fontWeight={700} color="success.main">
+        ₹ {totalReceived.toLocaleString("en-IN")}
+      </Typography>
+
+      <Typography variant="body2" mt={1}>
+        Transactions: {rows.length}
+      </Typography>
+    </Card>
+
+    {/* ================= TABLE ================= */}
+    <Card sx={{ borderRadius: 2 }}>
+      <TableContainer>
+        <Table size="small">
+
+          <TableHead>
+            <TableRow>
+              {[
+                "SR NO",
+                "DATE",
+                "CUSTOMER NAME",
+                "PHONE",
+                "RECEIVED AMOUNT (₹)",
+              ].map((header, index, arr) => (
+                <TableCell
+                  key={header}
+                  align="center"
+                  sx={{
+                    fontWeight: 700,
+                    backgroundColor: "#f1f5f9",
+                    borderRight:
+                      index !== arr.length - 1
+                        ? "1px solid #e5e7eb"
+                        : "none",
+                  }}
+                >
+                  {header}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {rows.length === 0 ? (
               <TableRow>
-                <TableCell><b>Sr No.</b></TableCell>
-                <TableCell><b>Date</b></TableCell>
-                <TableCell><b>Customer Name</b></TableCell>
-                <TableCell><b>Phone No.</b></TableCell>
-                <TableCell align="right"><b>Received Amount</b></TableCell>
+                <TableCell colSpan={5} align="center">
+                  No data found
+                </TableCell>
               </TableRow>
-            </TableHead>
+            ) : (
+              rows.map((r, i) => (
+                <TableRow
+                  key={i}
+                  hover
+                  sx={{
+                    "&:nth-of-type(even)": {
+                      backgroundColor: "#f9fafb",
+                    },
+                  }}
+                >
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {i + 1}
+                  </TableCell>
 
-            <TableBody>
-              {rows.map((r, i) => (
-                <TableRow key={i}>
-                  <TableCell>{i + 1}</TableCell>
-                  <TableCell>{r.date}</TableCell>
-                  <TableCell>{r.customerName}</TableCell>
-                  <TableCell>{r.phone}</TableCell>
-                  <TableCell align="right">
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {r.date
+                      ? new Date(r.date)
+                          .toLocaleDateString("en-GB")
+                      : ""}
+                  </TableCell>
+
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {r.customerName}
+                  </TableCell>
+
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {r.phone}
+                  </TableCell>
+
+                  <TableCell align="center">
                     ₹ {r.receivedAmount.toLocaleString("en-IN")}
                   </TableCell>
                 </TableRow>
-              ))}
+              ))
+            )}
+          </TableBody>
 
-              {!rows.length && !loading && (
-                <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    No data found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Card>
-    </Box>
-  );
+        </Table>
+      </TableContainer>
+    </Card>
+
+  </Box>
+);
 }
 
 export default CustomerReceivedPayment;

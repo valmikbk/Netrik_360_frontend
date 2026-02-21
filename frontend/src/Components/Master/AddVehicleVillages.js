@@ -14,11 +14,11 @@ function AddVehicleVillages() {
   const [form, setForm] = useState({
     type: "VEHICLE",
     nameOrNumber: "",
-    km: "",
-    approximateDistance: "", // ✅ NEW FIELD
+    approximateDistance: "",
   });
 
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -28,20 +28,21 @@ function AddVehicleVillages() {
     setForm({
       type: "VEHICLE",
       nameOrNumber: "",
-      km: "",
       approximateDistance: "",
     });
+    setError("");
   };
 
   const handleSubmit = async () => {
+    setError("");
+
     if (!form.nameOrNumber) {
-      alert("Please fill required fields");
+      setError("Please fill required fields");
       return;
     }
 
-    // ✅ Extra validation for village
     if (form.type === "VILLAGE" && !form.approximateDistance) {
-      alert("Please enter approximate distance");
+      setError("Please enter approximate distance");
       return;
     }
 
@@ -52,9 +53,7 @@ function AddVehicleVillages() {
         "http://localhost:8000/api/vehicle-village/create/",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(form),
         }
       );
@@ -62,7 +61,7 @@ function AddVehicleVillages() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.error || "Failed to save");
+        setError(data.error || "Failed to save");
         return;
       }
 
@@ -70,7 +69,7 @@ function AddVehicleVillages() {
       handleReset();
     } catch (error) {
       console.error(error);
-      alert("Server error");
+      setError("Server error");
     } finally {
       setLoading(false);
     }
@@ -79,16 +78,36 @@ function AddVehicleVillages() {
   const isVehicle = form.type === "VEHICLE";
   const isVillage = form.type === "VILLAGE";
 
+  /* 🔥 INDUSTRIAL FIXED LABEL STYLE */
+  const labelStyle = {
+    width: 240,
+    minWidth: 240,
+    maxWidth: 240,
+    flex: "0 0 240px",
+    height: 56,
+    background: "linear-gradient(145deg, #e3f2fd, #bbdefb)",
+    border: "1px solid #90caf9",
+    borderRadius: 1,
+    px: 2,
+    fontWeight: 600,
+    fontSize: "0.9rem",
+    display: "flex",
+    alignItems: "center",
+  };
+
   return (
     <Card
       sx={{
-        maxWidth: 900,
+        width: "98%",
         mx: "auto",
+        minHeight: "80vh",
         borderRadius: 3,
         boxShadow: "0px 10px 30px rgba(0,0,0,0.2)",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      {/* Header */}
+      {/* HEADER */}
       <Box
         sx={{
           px: 3,
@@ -98,9 +117,7 @@ function AddVehicleVillages() {
       >
         <Typography
           variant="h6"
-          color="#fff"
-          fontWeight={600}
-          textAlign="center"
+          sx={{ color: "#fff", fontWeight: 600, textAlign: "center" }}
         >
           ADD VEHICLE / VILLAGES
         </Typography>
@@ -108,53 +125,80 @@ function AddVehicleVillages() {
 
       <Divider />
 
-      {/* Form */}
-      <CardContent sx={{ px: 4, py: 3 }}>
-        <Box display="flex" flexDirection="column" gap={3}>
-          <TextField
-            select
-            label="Select Type *"
-            name="type"
-            value={form.type}
-            onChange={handleChange}
-            fullWidth
-          >
-            <MenuItem value="VEHICLE">VEHICLE</MenuItem>
-            <MenuItem value="VILLAGE">VILLAGE</MenuItem>
-          </TextField>
+      <CardContent
+        sx={{
+          px: 8,
+          py: 6,
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <Box display="flex" flexDirection="column" gap={4}>
 
-          <TextField
-            label={isVehicle ? "Vehicle Number *" : "Village Name *"}
-            name="nameOrNumber"
-            value={form.nameOrNumber}
-            onChange={handleChange}
-            fullWidth
-          />
-
-          {/* ✅ SHOW ONLY FOR VILLAGE */}
-          {isVillage && (
+          {/* TYPE */}
+          <Box display="flex" alignItems="center" gap={2}>
+            <Box sx={labelStyle}>SELECT TYPE *</Box>
             <TextField
-              label="Approximate Distance (KM) *"
-              name="approximateDistance"
-              value={form.approximateDistance}
+              select
+              name="type"
+              value={form.type}
               onChange={handleChange}
-              type="number"
+              fullWidth
+            >
+              <MenuItem value="VEHICLE">VEHICLE</MenuItem>
+              <MenuItem value="VILLAGE">VILLAGE</MenuItem>
+            </TextField>
+          </Box>
+
+          {/* NAME / NUMBER */}
+          <Box display="flex" alignItems="center" gap={2}>
+            <Box sx={labelStyle}>
+              {isVehicle ? "VEHICLE NUMBER *" : "VILLAGE NAME *"}
+            </Box>
+            <TextField
+              name="nameOrNumber"
+              value={form.nameOrNumber}
+              onChange={handleChange}
               fullWidth
             />
+          </Box>
+
+          {/* APPROX DISTANCE (ONLY IF VILLAGE) */}
+          {isVillage && (
+            <Box display="flex" alignItems="center" gap={2}>
+              <Box sx={labelStyle}>APPROX DISTANCE (KM) *</Box>
+              <TextField
+                name="approximateDistance"
+                value={form.approximateDistance}
+                onChange={handleChange}
+                type="number"
+                fullWidth
+              />
+            </Box>
+          )}
+
+          {/* ERROR */}
+          {error && (
+            <Typography color="error" fontSize={14}>
+              {error}
+            </Typography>
           )}
         </Box>
 
-        {/* Actions */}
-        <Box display="flex" justifyContent="flex-end" gap={2} mt={4}>
+        {/* PUSH BUTTONS DOWN */}
+        <Box sx={{ flexGrow: 1 }} />
+
+        <Box display="flex" justifyContent="flex-end" gap={2}>
           <Button
             variant="contained"
+            disabled={loading}
             sx={{
-              px: 4,
+              px: 6,
               backgroundColor: "#2962ff",
               "&:hover": { backgroundColor: "#0039cb" },
             }}
             onClick={handleSubmit}
-            disabled={loading}
           >
             {loading ? "Saving..." : "ADD >>"}
           </Button>
@@ -162,7 +206,7 @@ function AddVehicleVillages() {
           <Button
             variant="contained"
             color="inherit"
-            sx={{ px: 4 }}
+            sx={{ px: 6 }}
             onClick={handleReset}
             disabled={loading}
           >

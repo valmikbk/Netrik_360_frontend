@@ -12,6 +12,8 @@ import {
   Button,
   Stack,
   CircularProgress,
+  Card,
+  TextField,
 } from "@mui/material";
 
 import jsPDF from "jspdf";
@@ -21,11 +23,21 @@ function SalesSheet() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
   const allowedItems = ["20MM", "40MM", "ALL MIX", "M SAND", "DUST"];
 
   /* ---------------- FETCH STOCK DATA ---------------- */
-  useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/stocks/")
+  const fetchData = () => {
+    setLoading(true);
+
+    const params = new URLSearchParams({
+      from_date: fromDate,
+      to_date: toDate,
+    });
+
+    fetch(`http://127.0.0.1:8000/api/reports/sales-sheet/?${params.toString()}`)
       .then((res) => res.json())
       .then((data) => {
         setRows(data.results || []);
@@ -35,6 +47,10 @@ function SalesSheet() {
         console.error("Failed to fetch stocks", err);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
 
   /* ---------------- FILTER + ABSOLUTE ---------------- */
@@ -66,17 +82,6 @@ function SalesSheet() {
         halign: "center",
         valign: "middle",
       },
-      headStyles: {
-        fillColor: [255, 255, 255],
-        textColor: 0,
-        lineWidth: 0.5,
-        lineColor: 0,
-        fontStyle: "bold",
-      },
-      bodyStyles: {
-        lineWidth: 0.5,
-        lineColor: 0,
-      },
     });
 
     doc.save("all_stock_report.pdf");
@@ -91,26 +96,11 @@ function SalesSheet() {
         <head>
           <title>All Stock Report</title>
           <style>
-            body {
-              font-family: Arial;
-              padding: 40px;
-            }
-            h2 {
-              text-align: center;
-              margin-bottom: 20px;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-            }
-            th, td {
-              border: 1px solid #000;
-              padding: 8px;
-              text-align: center;
-            }
-            th {
-              font-weight: bold;
-            }
+            body { font-family: Arial; padding: 40px; }
+            h2 { text-align: center; margin-bottom: 20px; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #000; padding: 8px; text-align: center; }
+            th { font-weight: bold; }
           </style>
         </head>
         <body>
@@ -144,112 +134,145 @@ function SalesSheet() {
     printWindow.print();
   };
 
-  return (
-    <Box sx={{ p: 4, backgroundColor: "#fff", minHeight: "100vh" }}>
-      {/* ACTION BUTTONS */}
-      <Stack direction="row" spacing={2} justifyContent="flex-end" mb={2}>
-        <Button
-          variant="outlined"
-          onClick={handlePrint}
-          disabled={filteredRows.length === 0}
-        >
-          Print
-        </Button>
+ return (
+  <Box sx={{ width: "100%" }}>
+
+    {/* ================= PAGE HEADER ================= */}
+<Box
+  sx={{
+    mb: 3,
+    py: 2,
+    px: 3,
+    borderRadius: 2,
+    background: "linear-gradient(90deg, #1a237e, #283593)",
+    color: "#ffffff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+  }}
+>
+  {/* Empty left spacer to balance center alignment */}
+  <Box sx={{ width: 120 }} />
+
+  {/* Center Title */}
+  <Typography
+    variant="h6"
+    fontWeight={700}
+    sx={{ textAlign: "center", flex: 1 }}
+  >
+    SALES SHEET
+  </Typography>
+
+  {/* Right Side Actions */}
+  <Stack direction="row" spacing={1}>
+    <Button
+      size="small"
+      variant="outlined"
+      onClick={handlePrint}
+      disabled={filteredRows.length === 0}
+      sx={{
+        color: "#fff",
+        borderColor: "rgba(255,255,255,0.6)",
+        "&:hover": {
+          borderColor: "#fff",
+          backgroundColor: "rgba(255,255,255,0.1)",
+        },
+      }}
+    >
+      PRINT
+    </Button>
+
+    <Button
+      size="small"
+      variant="contained"
+      onClick={handleDownloadPDF}
+      disabled={filteredRows.length === 0}
+      sx={{
+        backgroundColor: "#1565c0",
+        "&:hover": { backgroundColor: "#0d47a1" },
+      }}
+    >
+      DOWNLOAD
+    </Button>
+  </Stack>
+</Box>
+
+    {/* ================= FILTER SECTION ================= */}
+    <Card sx={{ p: 3, mb: 3 }}>
+      <Box display="flex" gap={3} flexWrap="wrap">
+
+        <TextField
+          type="date"
+          label="FROM"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+          sx={{ width: 220 }}
+        />
+
+        <TextField
+          type="date"
+          label="TO"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+          sx={{ width: 220 }}
+        />
+
         <Button
           variant="contained"
-          onClick={handleDownloadPDF}
-          disabled={filteredRows.length === 0}
+          size="small"
+          onClick={fetchData}
+          sx={{ height: 40 }}
         >
-          Download PDF
+          APPLY
         </Button>
-      </Stack>
 
-      {/* TITLE */}
-      <Typography
-        variant="h5"
-        fontWeight={800}
-        textAlign="center"
-        mb={3}
-      >
-        SHALES SHEET
-      </Typography>
+      </Box>
+    </Card>
 
-      {/* LOADING */}
-      {loading && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>
-          <CircularProgress />
-        </Box>
-      )}
+   
 
-      {/* EMPTY STATE */}
-      {!loading && filteredRows.length === 0 && (
-        <Typography textAlign="center" color="text.secondary">
-          No stock data available
-        </Typography>
-      )}
+    {/* ================= LOADING ================= */}
+    {loading && (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>
+        <CircularProgress />
+      </Box>
+    )}
 
-      {/* TABLE */}
-      {!loading && filteredRows.length > 0 && (
-        <TableContainer
-          component={Paper}
-          elevation={0}
-          sx={{
-            maxWidth: 700,
-            mx: "auto",
-            border: "1px solid #000",
-          }}
-        >
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell
-                  sx={{
-                    fontWeight: 700,
-                    border: "1px solid #000",
-                    textAlign: "center",
-                  }}
-                >
-                  Item Name
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 700,
-                    border: "1px solid #000",
-                    textAlign: "center",
-                  }}
-                >
-                  Total Stock
+    {/* ================= TABLE ================= */}
+    {!loading && filteredRows.length > 0 && (
+      <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell align="center" sx={{ fontWeight: 700 }}>
+                ITEM NAME
+              </TableCell>
+              <TableCell align="center" sx={{ fontWeight: 700 }}>
+                TOTAL STOCK
+              </TableCell>
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {filteredRows.map((row, index) => (
+              <TableRow key={index}>
+                <TableCell align="center">{row.item}</TableCell>
+                <TableCell align="center">
+                  {Number(row.stock).toFixed(2)}
                 </TableCell>
               </TableRow>
-            </TableHead>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    )}
 
-            <TableBody>
-              {filteredRows.map((row, index) => (
-                <TableRow key={index}>
-                  <TableCell
-                    sx={{
-                      border: "1px solid #000",
-                      textAlign: "center",
-                    }}
-                  >
-                    {row.item}
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      border: "1px solid #000",
-                      textAlign: "center",
-                    }}
-                  >
-                    {Number(row.stock).toFixed(2)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-    </Box>
-  );
+  </Box>
+);
 }
 
 export default SalesSheet;

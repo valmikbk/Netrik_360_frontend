@@ -116,6 +116,7 @@ function FuelVsKilometer() {
   const [vehicleId, setVehicleId] = useState("All");
   const [period, setPeriod] = useState("This Month");
   const [loading, setLoading] = useState(false);
+  const [vehicles, setVehicles] = useState([]);
 
   const now = new Date();
   const [fromDate, setFromDate] = useState(
@@ -146,29 +147,43 @@ function FuelVsKilometer() {
 
   /* ------------------ FETCH DATA ------------------ */
   const fetchReport = async () => {
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      const params = new URLSearchParams({
-        from_date: fromDate,
-        to_date: toDate,
-        fuel_type: fuelType,
-        vehicle_id: vehicleId,
-        search,
-      });
+    const params = new URLSearchParams({
+      from_date: fromDate,
+      to_date: toDate,
+      vehicle_id: vehicleId === "All" ? "" : vehicleId,
+      search,
+    });
 
-      const res = await fetch(
-        `http://localhost:8000/api/reports/fuel-vs-kilometer/?${params.toString()}`
-      );
+    const res = await fetch(
+      `http://localhost:8000/api/reports/fuel-vs-kilometer/?${params.toString()}`
+    );
 
-      const data = await res.json();
-      setRows(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Fuel vs KM fetch error", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const data = await res.json();
+    const reportData = Array.isArray(data) ? data : [];
+
+    setRows(reportData);
+
+    // ✅ Extract unique vehicles (ID + Number)
+    const uniqueVehicles = [
+      ...new Map(
+        reportData.map((item) => [
+          item.vehicleId,
+          { id: item.vehicleId, number: item.vehicleNo },
+        ])
+      ).values(),
+    ];
+
+    setVehicles(uniqueVehicles);
+
+  } catch (err) {
+    console.error("Fuel vs KM fetch error", err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchReport();
@@ -201,152 +216,256 @@ function FuelVsKilometer() {
     window.open(doc.output("bloburl")).print();
   };
 
-  return (
-    <Box p={2}>
-      <Typography variant="h5" fontWeight={700} mb={2}>
-        Fuel vs Kilometer
+  const formatDisplayDate = (dateString) => {
+  if (!dateString) return "";
+
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
+};
+
+ return (
+  <Box sx={{ width: "100%" }}>
+
+    {/* ================= ERP HEADER ================= */}
+    <Box
+      sx={{
+        mb: 3,
+        px: 3,
+        py: 2,
+        borderRadius: 2,
+        background: "linear-gradient(90deg, #1a237e, #283593)",
+        color: "#fff",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <Typography variant="h6" fontWeight={600}>
+        FUEL VS KILOMETER REPORT
       </Typography>
 
-      {/* FILTERS */}
-      <Card sx={{ p: 2, mb: 2 }}>
-        <Box display="flex" gap={2} flexWrap="wrap">
+      <Box>
+        <IconButton onClick={handleDownloadReport} sx={{ color: "#fff" }}>
+          <FileDownloadIcon />
+        </IconButton>
 
-          <TextField
-            label="Search"
-            size="small"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
-
-          <TextField
-            select
-            label="Vehicle"
-            size="small"
-            value={vehicleId}
-            onChange={(e) => setVehicleId(e.target.value)}
-            sx={{ minWidth: 160 }}
-          >
-            <MenuItem value="All">All Vehicles</MenuItem>
-          </TextField>
-
-          <TextField
-            select
-            label="Fuel Type"
-            size="small"
-            value={fuelType}
-            onChange={(e) => setFuelType(e.target.value)}
-            sx={{ minWidth: 140 }}
-          >
-            <MenuItem value="All">All</MenuItem>
-            <MenuItem value="Diesel">Diesel</MenuItem>
-            <MenuItem value="Adblue">Adblue</MenuItem>
-          </TextField>
-
-          <TextField
-            select
-            label="Period"
-            size="small"
-            value={period}
-            onChange={(e) => setPeriod(e.target.value)}
-            sx={{ minWidth: 140 }}
-          >
-            <MenuItem value="This Month">This Month</MenuItem>
-            <MenuItem value="Last Month">Last Month</MenuItem>
-            <MenuItem value="Last Year">Last Year</MenuItem>
-          </TextField>
-
-          <TextField
-            type="date"
-            size="small"
-            label="From Date"
-            InputLabelProps={{ shrink: true }}
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-          />
-
-          <TextField
-            type="date"
-            size="small"
-            label="To Date"
-            InputLabelProps={{ shrink: true }}
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-          />
-
-        </Box>
-      </Card>
-
-      {/* SUMMARY */}
-      <Card sx={{ p: 2, mb: 3, maxWidth: 520 }}>
-        <Typography fontWeight={600}>
-          Fuel & Distance Summary
-        </Typography>
-        <Typography variant="h6">
-          {totalFuel} Liters / {totalKm} KM
-        </Typography>
-      </Card>
-
-      {/* TABLE */}
-      <Card sx={{ p: 2 }}>
-        <Box display="flex" justifyContent="space-between" mb={1}>
-          <Typography variant="h6">Fuel & Distance Records</Typography>
-          <Box>
-            <IconButton onClick={handleDownloadReport}>
-              <FileDownloadIcon />
-            </IconButton>
-            <IconButton onClick={handlePrintReport}>
-              <PrintIcon />
-            </IconButton>
-          </Box>
-        </Box>
-
-        <Divider sx={{ mb: 1 }} />
-
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                {[
-                  "Date",
-                  "Vehicle No",
-                  "Fuel (ltr)",
-                  "Production KM",
-                  "From",
-                  "Sales KM",
-                  "To",
-                  "Total KM",
-                ].map(h => (
-                  <TableCell key={h}><b>{h}</b></TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-
-            <TableBody>
-              {rows.map((r, i) => (
-                <TableRow key={i}>
-                  <TableCell>{r.date}</TableCell>
-                  <TableCell>{r.vehicleNo}</TableCell>
-                  <TableCell>{r.fuelLiters}</TableCell>
-                  <TableCell>{r.productionKm}</TableCell>
-                  <TableCell>{r.destinationFrom}</TableCell>
-                  <TableCell>{r.salesKm}</TableCell>
-                  <TableCell>{r.destinationTo}</TableCell>
-                  <TableCell>{r.totalKm}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Card>
+        <IconButton onClick={handlePrintReport} sx={{ color: "#fff" }}>
+          <PrintIcon />
+        </IconButton>
+      </Box>
     </Box>
-  );
+
+    {/* ================= FILTER CARD ================= */}
+    <Card
+      sx={{
+        p: 3,
+        mb: 3,
+        borderRadius: 2,
+        boxShadow: "0px 4px 14px rgba(0,0,0,0.06)",
+      }}
+    >
+      <Box display="flex" gap={3} flexWrap="wrap">
+
+        <TextField
+          label="SEARCH"
+          size="small"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ minWidth: 220 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+        />
+
+        <TextField
+          select
+          label="VEHICLE"
+          size="small"
+          value={vehicleId}
+          onChange={(e) => setVehicleId(e.target.value)}
+          sx={{ minWidth: 180 }}
+        >
+          <MenuItem value="All">All Vehicles</MenuItem>
+          {vehicles.map((v) => (
+            <MenuItem key={v.id} value={v.id}>
+              {v.number}
+            </MenuItem>
+          ))}
+        </TextField>
+
+        {/* <TextField
+          select
+          label="FUEL TYPE"
+          size="small"
+          value={fuelType}
+          onChange={(e) => setFuelType(e.target.value)}
+          sx={{ minWidth: 140 }}
+        >
+          <MenuItem value="All">All</MenuItem>
+          <MenuItem value="Diesel">Diesel</MenuItem>
+          <MenuItem value="Adblue">Adblue</MenuItem>
+        </TextField> */}
+
+        <TextField
+          label="FROM"
+          type="date"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+        />
+
+        <TextField
+          label="TO"
+          type="date"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+        />
+
+      </Box>
+    </Card>
+
+    {/* ================= SUMMARY CARD ================= */}
+    <Card sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+      <Typography variant="caption" fontWeight={600} color="text.secondary">
+        FUEL & DISTANCE SUMMARY
+      </Typography>
+
+      <Typography variant="h6" fontWeight={700} color="success.main">
+        {Number(totalFuel || 0).toLocaleString("en-IN")} Ltr
+      </Typography>
+
+      <Typography variant="body2" mt={1}>
+        Total Distance: {Number(totalKm || 0).toLocaleString("en-IN")} KM
+      </Typography>
+    </Card>
+
+    {/* ================= TABLE ================= */}
+    <Card sx={{ borderRadius: 2 }}>
+      <TableContainer>
+        <Table size="small">
+
+          <TableHead>
+            <TableRow>
+              {[
+                "DATE",
+                "VEHICLE NO",
+                "FUEL (LTR)",
+                "PRODUCTION KM",
+                "FROM",
+                "SALES KM",
+                "TO",
+                "TOTAL KM",
+              ].map((header, index, arr) => (
+                <TableCell
+                  key={header}
+                  align="center"
+                  sx={{
+                    fontWeight: 700,
+                    backgroundColor: "#f1f5f9",
+                    borderRight:
+                      index !== arr.length - 1
+                        ? "1px solid #e5e7eb"
+                        : "none",
+                  }}
+                >
+                  {header}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {rows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} align="center">
+                  No data found
+                </TableCell>
+              </TableRow>
+            ) : (
+              rows.map((r, i) => (
+                <TableRow
+                  key={i}
+                  hover
+                  sx={{
+                    "&:nth-of-type(even)": {
+                      backgroundColor: "#f9fafb",
+                    },
+                  }}
+                >
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {formatDisplayDate(r.date)}
+                  </TableCell>
+
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {r.vehicleNo ?? "-"}
+                  </TableCell>
+
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {Number(r.fuelLiters || 0).toLocaleString("en-IN")}
+                  </TableCell>
+
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {Number(r.productionKm || 0).toLocaleString("en-IN")}
+                  </TableCell>
+
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {r.destinationFrom || "-"}
+                  </TableCell>
+
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {Number(r.salesKm || 0).toLocaleString("en-IN")}
+                  </TableCell>
+
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {r.destinationTo || "-"}
+                  </TableCell>
+
+                  <TableCell align="center">
+                    {Number(r.totalKm || 0).toLocaleString("en-IN")}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+
+        </Table>
+      </TableContainer>
+    </Card>
+
+  </Box>
+);
 }
 
 export default FuelVsKilometer;

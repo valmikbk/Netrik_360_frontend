@@ -111,7 +111,7 @@ function FuelIn() {
     <Card sx={{ maxWidth: 900, mx: "auto", borderRadius: 3 }}>
       <Box px={3} py={2} sx={{ background: "linear-gradient(90deg, #1a237e, #283593)" }}>
         <Typography variant="h6" color="#fff" fontWeight={600} textAlign="center">
-          FUEL ENTRY
+          FUEL IN
         </Typography>
       </Box>
 

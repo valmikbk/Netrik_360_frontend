@@ -26,6 +26,7 @@ import Payments from "./Components/payments/payments";
 import CustomerPayments from "./Components/payments/CustomerPayments";
 import HomeAddCutomer from "./Components/Home/HomeAddCutomer";
 import Signup from "./Components/Auth/Signup";
+import AddVillage from "./Components/Home/AddVillage";
 
 function App() {
   return (
@@ -66,6 +67,7 @@ function App() {
         <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
         <Route path="/customer-payments" element={<ProtectedRoute><CustomerPayments /></ProtectedRoute>} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/add-village" element={<ProtectedRoute><AddVillage /></ProtectedRoute>} />
       </Routes>
     </Router>
   );

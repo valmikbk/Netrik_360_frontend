@@ -42,10 +42,6 @@ function TotalFuelIn() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleFileChange = (e) => {
-    setForm({ ...form, billFile: e.target.files[0] });
-  };
-
   /* ---------------- SAVE ---------------- */
   const handleSave = async () => {
     if (!form.fuelId || !form.liters || !form.amount) {
@@ -58,12 +54,7 @@ function TotalFuelIn() {
       formData.append("fuel_id", form.fuelId);
       formData.append("date", form.date);
       formData.append("volume", form.liters);
-    //   formData.append("price_per_liter", pricePerLiter);
       formData.append("total_amount", form.amount);
-
-      if (form.billFile) {
-        formData.append("bill_doc", form.billFile);
-      }
 
       const res = await fetch(
         "http://localhost:8000/api/fuel-purchase/create/",
@@ -73,16 +64,13 @@ function TotalFuelIn() {
         }
       );
 
-      const data = await res.json();
-
       if (!res.ok) {
-        alert(data.error || "Failed to save fuel entry");
+        alert("Failed to save fuel entry");
         return;
       }
 
       alert("Fuel entry added successfully");
 
-      // Reset form
       setForm({
         fuelId: "",
         date: new Date().toISOString().split("T")[0],
@@ -97,113 +85,145 @@ function TotalFuelIn() {
     }
   };
 
-  /* ---------------- UI ---------------- */
+  /* ================= INDUSTRIAL LABEL STYLE ================= */
+  const labelStyle = {
+    width: 240,
+    minWidth: 240,
+    maxWidth: 240,
+    flex: "0 0 240px",
+    height: 56,
+    background: "linear-gradient(145deg, #e3f2fd, #bbdefb)",
+    border: "1px solid #90caf9",
+    borderRadius: 1,
+    px: 2,
+    fontWeight: 600,
+    fontSize: "0.9rem",
+    display: "flex",
+    alignItems: "center",
+  };
+
   return (
-    <Card sx={{ maxWidth: 900, mx: "auto", borderRadius: 3 }}>
+    <Card
+      sx={{
+        width: "98%",
+        mx: "auto",
+        minHeight: "80vh",
+        borderRadius: 3,
+        boxShadow: "0px 10px 30px rgba(0,0,0,0.25)",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* HEADER */}
       <Box
-        px={3}
-        py={2}
         sx={{
+          px: 3,
+          py: 2,
           background: "linear-gradient(90deg, #1a237e, #283593)",
         }}
       >
         <Typography
           variant="h6"
-          color="#fff"
-          fontWeight={600}
-          textAlign="center"
+          sx={{ color: "#fff", fontWeight: 600, textAlign: "center" }}
         >
-          FUEL ENTRY
+          FUEL IN
         </Typography>
       </Box>
 
       <Divider />
 
-      <CardContent sx={{ px: 4, py: 3 }}>
-        <Box display="flex" flexDirection="column" gap={3}>
+      <CardContent
+        sx={{
+          px: 8,
+          py: 6,
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <Box display="flex" flexDirection="column" gap={4}>
 
-          {/* Fuel */}
-          <TextField
-            select
-            label="Fuel *"
-            name="fuelId"
-            value={form.fuelId}
-            onChange={handleChange}
-            fullWidth
-          >
-            <MenuItem value="">
-              <em>Select Fuel</em>
-            </MenuItem>
-            {fuels.map((fuel) => (
-              <MenuItem key={fuel.id} value={fuel.id}>
-                {fuel.name}
+          {/* FUEL */}
+          <Box display="flex" alignItems="center" gap={3}>
+            <Box sx={labelStyle}>FUEL *</Box>
+            <TextField
+              select
+              name="fuelId"
+              value={form.fuelId}
+              onChange={handleChange}
+              fullWidth
+            >
+              <MenuItem value="">
+                <em>Select Fuel</em>
               </MenuItem>
-            ))}
-          </TextField>
+              {fuels.map((fuel) => (
+                <MenuItem key={fuel.id} value={fuel.id}>
+                  {fuel.name}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Box>
 
-          {/* Date */}
-          <TextField
-            label="Date *"
-            name="date"
-            type="date"
-            value={form.date}
-            onChange={handleChange}
-            InputLabelProps={{ shrink: true }}
-            fullWidth
-          />
+          {/* DATE */}
+          <Box display="flex" alignItems="center" gap={3}>
+            <Box sx={labelStyle}>DATE *</Box>
+            <TextField
+              type="date"
+              name="date"
+              value={form.date}
+              onChange={handleChange}
+              fullWidth
+            />
+          </Box>
 
-          {/* Liters */}
-          <TextField
-            label="Liters *"
-            name="liters"
-            value={form.liters}
-            onChange={handleChange}
-            type="number"
-            fullWidth
-          />
+          {/* LITERS */}
+          <Box display="flex" alignItems="center" gap={3}>
+            <Box sx={labelStyle}>LITERS *</Box>
+            <TextField
+              name="liters"
+              value={form.liters}
+              onChange={handleChange}
+              type="number"
+              fullWidth
+            />
+          </Box>
 
-          {/* Total Amount */}
-          <TextField
-            label="Total Amount *"
-            name="amount"
-            value={form.amount}
-            onChange={handleChange}
-            type="number"
-            fullWidth
-          />
+          {/* TOTAL AMOUNT */}
+          <Box display="flex" alignItems="center" gap={3}>
+            <Box sx={labelStyle}>TOTAL AMOUNT *</Box>
+            <TextField
+              name="amount"
+              value={form.amount}
+              onChange={handleChange}
+              type="number"
+              fullWidth
+            />
+          </Box>
 
-          {/* Auto-calculated Price */}
-          {/* <TextField
-            label="Price / Liter"
-            value={pricePerLiter}
-            InputProps={{ readOnly: true }}
-            fullWidth
-          /> */}
+          {/* OPTIONAL PRICE PER LITER (if you want back) */}
+          {/* 
+          <Box display="flex" alignItems="center" gap={3}>
+            <Box sx={labelStyle}>PRICE / LITER</Box>
+            <TextField
+              value={pricePerLiter}
+              InputProps={{ readOnly: true }}
+              fullWidth
+            />
+          </Box> 
+          */}
 
-          {/* Bill Upload */}
-          {/* <Box>
-            <Button variant="outlined" component="label">
-              Upload Fuel Bill
-              <input
-                type="file"
-                hidden
-                accept=".pdf,image/*"
-                onChange={handleFileChange}
-              />
-            </Button>
-
-            {form.billFile && (
-              <Typography variant="body2" mt={1}>
-                Selected File: <b>{form.billFile.name}</b>
-              </Typography>
-            )}
-          </Box> */}
         </Box>
 
-        <Box display="flex" justifyContent="flex-end" mt={4}>
+        <Box sx={{ flexGrow: 1 }} />
+
+        <Box display="flex" justifyContent="flex-end">
           <Button
             variant="contained"
-            sx={{ px: 4 }}
+            sx={{
+              px: 6,
+              backgroundColor: "#2962ff",
+              "&:hover": { backgroundColor: "#0039cb" },
+            }}
             onClick={handleSave}
           >
             SAVE &gt;&gt;

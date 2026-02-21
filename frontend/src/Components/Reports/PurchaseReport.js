@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Card,
@@ -12,8 +12,6 @@ import {
   TableHead,
   TableRow,
   IconButton,
-  Paper,
-  Divider,
   InputAdornment,
 } from "@mui/material";
 
@@ -23,9 +21,8 @@ import PrintIcon from "@mui/icons-material/Print";
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import logo from "../Logo/Meghana_stone_logo.png";
 
-/* ------------------ DATE FORMAT ------------------ */
+/* ---------------- DATE FORMAT ---------------- */
 const formatDate = (date) => {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -33,21 +30,11 @@ const formatDate = (date) => {
   return `${y}-${m}-${d}`;
 };
 
-/* ------------------ IMAGE TO BASE64 ------------------ */
-const loadImageAsBase64 = (src) =>
-  new Promise((resolve) => {
-    const img = new Image();
-    img.src = src;
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      canvas.getContext("2d").drawImage(img, 0, 0);
-      resolve(canvas.toDataURL("image/png"));
-    };
-  });
+/* ---------------- SAFE NUMBER ---------------- */
+const safeNumber = (value) =>
+  Number(value || 0).toLocaleString("en-IN");
 
-/* ------------------ PDF ------------------ */
+/* ---------------- PDF GENERATOR ---------------- */
 const generatePurchaseReportPDF = async ({
   rows,
   fromDate,
@@ -56,11 +43,9 @@ const generatePurchaseReportPDF = async ({
 }) => {
   const doc = new jsPDF("p", "mm", "a4");
   const primary = [41, 98, 255];
-  const logoBase64 = await loadImageAsBase64(logo);
 
   doc.setFillColor(...primary);
   doc.rect(0, 0, 210, 28, "F");
-  doc.addImage(logoBase64, "PNG", 14, 6, 20, 16);
 
   doc.setTextColor(255);
   doc.setFont("helvetica", "bold");
@@ -74,25 +59,13 @@ const generatePurchaseReportPDF = async ({
 
   autoTable(doc, {
     startY: 52,
-    head: [[
-      "Date",
-      "Bill No",
-      "Supplier",
-      "Village",
-      "Item",
-      "Brass",
-      "Amount",
-      "MR Name",
-    ]],
-    body: rows.map(r => [
-      r.date,
-      r.billNo,
-      r.supplierName,
-      r.village,
-      r.item,
-      r.brass,
-      `₹ ${r.amount.toLocaleString("en-IN")}`,
-      r.mrName,
+    head: [["Date", "Vehicle No", "Quantity (Brass)"]],
+    body: rows.map((r) => [
+      r.date
+        ? new Date(r.date).toLocaleDateString("en-GB")
+        : "",
+      r.vehicle_number || "",
+      r.brass || 0,
     ]),
     theme: "grid",
     styles: { fontSize: 9 },
@@ -100,9 +73,10 @@ const generatePurchaseReportPDF = async ({
   });
 
   const y = doc.lastAutoTable.finalY + 8;
-  doc.setFontøsetFont("helvetica", "bold");
+
+  doc.setFont("helvetica", "bold");
   doc.text(
-    `Total Purchase : ₹ ${totalPurchase.toLocaleString("en-IN")}`,
+    `Total Purchase : ${safeNumber(totalPurchase)}`,
     14,
     y
   );
@@ -111,11 +85,8 @@ const generatePurchaseReportPDF = async ({
 };
 
 function PurchaseReport() {
-  /* ------------------ STATES ------------------ */
   const [rows, setRows] = useState([]);
   const [totalPurchase, setTotalPurchase] = useState(0);
-  const [loading, setLoading] = useState(false);
-
   const [search, setSearch] = useState("");
   const [period, setPeriod] = useState("This Month");
 
@@ -127,29 +98,25 @@ function PurchaseReport() {
     formatDate(new Date(now.getFullYear(), now.getMonth() + 1, 0))
   );
 
-  /* ------------------ FETCH DATA ------------------ */
+  /* ---------------- FETCH DATA ---------------- */
   const fetchPurchaseReport = async () => {
     try {
-      setLoading(true);
-
       const params = new URLSearchParams({
         from_date: fromDate,
         to_date: toDate,
-        search: search,
+        search,
       });
 
       const res = await fetch(
-        `http://localhost:8000/api/purchase/report/?${params.toString()}`
+        `http://localhost:8000/api/purchase/report/?${params}`
       );
 
       const data = await res.json();
 
       setRows(data.results || []);
-      setTotalPurchase(data.total_brass);
+      setTotalPurchase(data.total_brass || 0);
     } catch (err) {
       console.error("Purchase report error", err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -157,7 +124,7 @@ function PurchaseReport() {
     fetchPurchaseReport();
   }, [fromDate, toDate, search]);
 
-  /* ------------------ PERIOD HANDLER ------------------ */
+  /* ---------------- PERIOD HANDLER ---------------- */
   const handlePeriodChange = (value) => {
     setPeriod(value);
     let start, end;
@@ -183,7 +150,7 @@ function PurchaseReport() {
     setToDate(formatDate(end));
   };
 
-  /* ------------------ ACTIONS ------------------ */
+  /* ---------------- ACTIONS ---------------- */
   const handleDownloadReport = async () => {
     const doc = await generatePurchaseReportPDF({
       rows,
@@ -205,17 +172,41 @@ function PurchaseReport() {
   };
 
   return (
-    <Box p={2}>
-      <Typography variant="h5" fontWeight={700} mb={2}>
-        Purchase Report
-      </Typography>
+    <Box sx={{ width: "100%" }}>
+
+      {/* HEADER */}
+      <Box
+        sx={{
+          mb: 3,
+          px: 3,
+          py: 2,
+          borderRadius: 2,
+          background: "linear-gradient(90deg, #1a237e, #283593)",
+          color: "#fff",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Typography variant="h6" fontWeight={600}>
+          RAW MATERIALS REPORT
+        </Typography>
+
+        <Box>
+         <IconButton onClick={handleDownloadReport} sx={{ color: "#fff" }}>
+            <FileDownloadIcon />
+          </IconButton>
+          <IconButton onClick={handlePrintReport} sx={{ color: "#fff" }}>
+            <PrintIcon />
+          </IconButton>
+        </Box>
+      </Box>
 
       {/* FILTERS */}
-      <Card sx={{ p: 2, mb: 2 }}>
-        <Box display="flex" gap={2} flexWrap="wrap">
-
+      <Card sx={{ p: 3, mb: 3 }}>
+        <Box display="flex" gap={3} flexWrap="wrap">
           <TextField
-            label="Search"
+            label="SEARCH ITEM"
             size="small"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -228,21 +219,20 @@ function PurchaseReport() {
             }}
           />
 
-          <TextField
+          {/* <TextField
             select
-            label="Period"
+            label="PERIOD"
             size="small"
             value={period}
-            sx={{ minWidth: 140 }}
             onChange={(e) => handlePeriodChange(e.target.value)}
           >
             <MenuItem value="This Month">This Month</MenuItem>
             <MenuItem value="Last Month">Last Month</MenuItem>
             <MenuItem value="Last Year">Last Year</MenuItem>
-          </TextField>
+          </TextField> */}
 
           <TextField
-            label="From Date"
+            label="FROM"
             size="small"
             type="date"
             InputLabelProps={{ shrink: true }}
@@ -251,80 +241,97 @@ function PurchaseReport() {
           />
 
           <TextField
-            label="To Date"
+            label="TO"
             size="small"
             type="date"
             InputLabelProps={{ shrink: true }}
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
           />
-
         </Box>
       </Card>
 
       {/* SUMMARY */}
-      <Card sx={{ p: 2, mb: 3, maxWidth: 420 }}>
-        <Typography>Total Purchase</Typography>
-        <Typography variant="h5" fontWeight={700} color="error.main">
-          {totalPurchase}
+      <Card sx={{ p: 3, mb: 3 }}>
+        <Typography variant="caption" fontWeight={600} color="text.secondary">
+          TOTAL PURCHASE (BRASS)
         </Typography>
+
+        <Typography variant="h6" fontWeight={700} color="error.main">
+          {safeNumber(totalPurchase)}
+        </Typography>
+
         <Typography variant="body2" mt={1}>
           Entries: {rows.length}
         </Typography>
       </Card>
 
       {/* TABLE */}
-      <Card sx={{ p: 2 }}>
-        <Box display="flex" justifyContent="space-between" mb={1}>
-          <Typography variant="h6">Purchase Transactions</Typography>
-          <Box>
-            <IconButton onClick={handleDownloadReport}>
-              <FileDownloadIcon />
-            </IconButton>
-            <IconButton onClick={handlePrintReport}>
-              <PrintIcon />
-            </IconButton>
-          </Box>
-        </Box>
+      <Card>
+        <TableContainer>
+          <Table size="small">
 
-        <Divider sx={{ mb: 1 }} />
-
-        <TableContainer component={Paper}>
-          <Table>
             <TableHead>
               <TableRow>
-                {[
-                  "Date",
-                //   "Bill No",
-                //   "Supplier",
-                //   "Village",
-                  "Vehicle No",
-                  "Quantity",
-                //   "Amount",
-                //   "MR Name",
-                ].map(h => (
-                  <TableCell key={h}><b>{h}</b></TableCell>
-                ))}
+                {["DATE", "VEHICLE NO", "QUANTITY (BRASS)"].map(
+                  (header, index, arr) => (
+                    <TableCell
+                      key={header}
+                      align="center"
+                      sx={{
+                        fontWeight: 700,
+                        backgroundColor: "#f1f5f9",
+                        borderRight:
+                          index !== arr.length - 1
+                            ? "1px solid #e5e7eb"
+                            : "none",
+                      }}
+                    >
+                      {header}
+                    </TableCell>
+                  )
+                )}
               </TableRow>
             </TableHead>
 
             <TableBody>
-              {rows.map((r, i) => (
-                <TableRow key={i}>
-                  <TableCell>{r.date}</TableCell>
-                  {/* <TableCell>{r.billNo}</TableCell> */}
-                  {/* <TableCell>{r.supplierName}</TableCell> */}
-                  {/* <TableCell>{r.village}</TableCell> */}
-                  <TableCell>{r.vehicle_number}</TableCell>
-                  <TableCell>{r.brass}</TableCell>
-                  {/* <TableCell>₹ {r.amount.toLocaleString("en-IN")}</TableCell> */}
-                  {/* <TableCell>{r.mrName}</TableCell> */}
+              {rows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} align="center">
+                    No data found
+                  </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                rows.map((r, i) => (
+                  <TableRow key={i} hover>
+                    <TableCell
+                      align="center"
+                      sx={{ borderRight: "1px solid #e5e7eb" }}
+                    >
+                      {r.date
+                        ? new Date(r.date).toLocaleDateString("en-GB")
+                        : ""}
+                    </TableCell>
+
+                    <TableCell
+                      align="center"
+                      sx={{ borderRight: "1px solid #e5e7eb" }}
+                    >
+                      {r.vehicle_number || ""}
+                    </TableCell>
+
+                    <TableCell align="center">
+                      {r.brass || 0}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
+
           </Table>
         </TableContainer>
       </Card>
+
     </Box>
   );
 }

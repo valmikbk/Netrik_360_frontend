@@ -18,6 +18,7 @@ function UpdateEmployeeSalary() {
 
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   /* FETCH ACTIVE EMPLOYEES */
   useEffect(() => {
@@ -33,8 +34,10 @@ function UpdateEmployeeSalary() {
 
   /* UPDATE SALARY */
   const handleUpdate = async () => {
+    setError("");
+
     if (!form.employeeId || !form.salary) {
-      alert("Please select employee and enter salary");
+      setError("Please select employee and enter salary");
       return;
     }
 
@@ -51,14 +54,14 @@ function UpdateEmployeeSalary() {
 
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || "Update failed");
+        setError(data.error || "Update failed");
         return;
       }
 
       alert(data.message);
       setForm({ employeeId: "", salary: "" });
     } catch {
-      alert("Server error");
+      setError("Server error");
     } finally {
       setLoading(false);
     }
@@ -66,12 +69,14 @@ function UpdateEmployeeSalary() {
 
   /* DEACTIVATE EMPLOYEE */
   const handleDeactivate = async () => {
+    setError("");
+
     if (!form.employeeId) {
-      alert("Select employee first");
+      setError("Select employee first");
       return;
     }
 
-    if (!window.confirm("Deactivate this employee?")) return;
+    if (!window.confirm("DELETE THIS EMPLOYEE?")) return;
 
     setLoading(true);
     try {
@@ -82,65 +87,132 @@ function UpdateEmployeeSalary() {
 
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || "Action failed");
+        setError(data.error || "Action failed");
         return;
       }
 
       alert(data.message);
 
-      // remove from dropdown immediately
-      setEmployees(employees.filter(e => e.id !== form.employeeId));
+      setEmployees(
+        employees.filter((e) => e.id !== form.employeeId)
+      );
       setForm({ employeeId: "", salary: "" });
     } catch {
-      alert("Server error");
+      setError("Server error");
     } finally {
       setLoading(false);
     }
   };
 
+  /* 🔥 INDUSTRIAL FIXED LABEL STYLE */
+  const labelStyle = {
+    width: 240,
+    minWidth: 240,
+    maxWidth: 240,
+    flex: "0 0 240px",
+    height: 56,
+    background: "linear-gradient(145deg, #e3f2fd, #bbdefb)",
+    border: "1px solid #90caf9",
+    borderRadius: 1,
+    px: 2,
+    fontWeight: 600,
+    fontSize: "0.9rem",
+    display: "flex",
+    alignItems: "center",
+  };
+
   return (
-    <Card sx={{ maxWidth: 900, mx: "auto", borderRadius: 3 }}>
-      <Box sx={{ px: 3, py: 2, background: "linear-gradient(90deg, #1a237e, #283593)", }}>
-        <Typography variant="h6" color="#fff" fontWeight={600} textAlign="center">
-          UPDATE EMPLOYEE
+    <Card
+      sx={{
+        width: "98%",
+        mx: "auto",
+        minHeight: "80vh",
+        borderRadius: 3,
+        boxShadow: "0px 10px 30px rgba(0,0,0,0.2)",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* HEADER */}
+      <Box
+        sx={{
+          px: 3,
+          py: 2,
+          background: "linear-gradient(90deg, #1a237e, #283593)",
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{ color: "#fff", fontWeight: 600, textAlign: "center" }}
+        >
+          UPDATE/DELETE EMPLOYEE SALARY
         </Typography>
       </Box>
 
       <Divider />
 
-      <CardContent sx={{ px: 4, py: 3 }}>
-        <Box display="flex" flexDirection="column" gap={3}>
-          <TextField
-            select
-            label="Employee Name *"
-            name="employeeId"
-            value={form.employeeId}
-            onChange={handleChange}
-            fullWidth
-          >
-            <MenuItem value="">
-              <em>Select Employee</em>
-            </MenuItem>
-            {employees.map((emp) => (
-              <MenuItem key={emp.id} value={emp.id}>
-                {emp.name}
-              </MenuItem>
-            ))}
-          </TextField>
+      <CardContent
+        sx={{
+          px: 8,
+          py: 6,
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <Box display="flex" flexDirection="column" gap={4}>
 
-          <TextField
-            label="Salary *"
-            name="salary"
-            value={form.salary}
-            onChange={handleChange}
-            fullWidth
-          />
+          {/* EMPLOYEE NAME */}
+          <Box display="flex" alignItems="center" gap={2}>
+            <Box sx={labelStyle}>EMPLOYEE NAME *</Box>
+            <TextField
+              select
+              name="employeeId"
+              value={form.employeeId}
+              onChange={handleChange}
+              fullWidth
+            >
+              <MenuItem value="">
+                <em>Select Employee</em>
+              </MenuItem>
+              {employees.map((emp) => (
+                <MenuItem key={emp.id} value={emp.id}>
+                  {emp.name}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Box>
+
+          {/* SALARY */}
+          <Box display="flex" alignItems="center" gap={2}>
+            <Box sx={labelStyle}>SALARY *</Box>
+            <TextField
+              name="salary"
+              value={form.salary}
+              onChange={handleChange}
+              fullWidth
+            />
+          </Box>
+
+          {/* ERROR */}
+          {error && (
+            <Typography color="error" fontSize={14}>
+              {error}
+            </Typography>
+          )}
         </Box>
 
-        <Box display="flex" justifyContent="flex-end" gap={2} mt={4}>
+        {/* PUSH BUTTONS DOWN */}
+        <Box sx={{ flexGrow: 1 }} />
+
+        <Box display="flex" justifyContent="flex-end" gap={2}>
           <Button
             variant="contained"
-            sx={{ px: 4, backgroundColor: "#2962ff" }}
+            sx={{
+              px: 6,
+              backgroundColor: "#2962ff",
+              "&:hover": { backgroundColor: "#0039cb" },
+            }}
             onClick={handleUpdate}
             disabled={loading}
           >
@@ -149,11 +221,15 @@ function UpdateEmployeeSalary() {
 
           <Button
             variant="contained"
-            sx={{ px: 4, backgroundColor: "#f57c00" }}
+            sx={{
+              px: 6,
+              backgroundColor: "#ed3110",
+              "&:hover": { backgroundColor: "#c62828" },
+            }}
             onClick={handleDeactivate}
             disabled={loading}
           >
-            DEACTIVATE
+            DELETE
           </Button>
         </Box>
       </CardContent>

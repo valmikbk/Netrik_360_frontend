@@ -5,60 +5,30 @@ import {
   TextField,
   MenuItem,
   Button,
-  Paper,
-  IconButton,
+  Card,
+  CardContent,
+  Divider,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate } from "react-router-dom";
 import Header from "../Header/Header";
 
 function PurchaseBillEntry() {
   const navigate = useNavigate();
 
-  const [suppliers, setSuppliers] = useState([]);
-  const [selectedSupplierId, setSelectedSupplierId] = useState("");
-
-  const [villages, setVillages] = useState([]);
-  const [selectedVillegeId, setSelectedVillegeId] = useState("");
-
   const [vehicles, setVehicles] = useState([]);
   const [selectedVehicleId, setSelectedVehicleId] = useState("");
 
-
-  const [mrs, setMrs] = useState([]);
-  const [selectedMrId, setSelectedMrId] = useState("");
-
   const [form, setForm] = useState({
-    date: "",
-    billNo: "",
-    supplierName: "",
-    village: "",
-    vehicleNo: "",
+    date: new Date().toISOString().split("T")[0],
     brass: "",
-    amount: "",
-    mrName: "",
     billFile: null,
   });
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/suppliers/")
-      .then(res => res.json())
-      .then(data => setSuppliers(data))
-      .catch(err => console.error(err));
-
-    fetch("http://localhost:8000/api/villages/")
-      .then(res => res.json())
-      .then(data => setVillages(data))
-      .catch(err => console.error(err));
-
-    fetch("http://localhost:8000/api/employees/mr/")
-      .then(res => res.json())
-      .then(data => setMrs(data))
-      .catch(err => console.error(err));
     fetch("http://localhost:8000/api/vehicles/")
-      .then(res => res.json())
-      .then(data => setVehicles(data))
-      .catch(err => console.error("Vehicle fetch error", err));
+      .then((res) => res.json())
+      .then((data) => setVehicles(data))
+      .catch((err) => console.error("Vehicle fetch error", err));
   }, []);
 
   const handleChange = (e) => {
@@ -70,257 +40,201 @@ function PurchaseBillEntry() {
   };
 
   const handleSave = async () => {
+    if (!form.date || !selectedVehicleId || !form.brass) {
+      alert("Please fill required fields");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("date", form.date);
+    formData.append("vehicle", selectedVehicleId);
+    formData.append("quantity", form.brass);
+    formData.append("is_active", true);
+
+    if (form.billFile) {
+      formData.append("bill_doc", form.billFile);
+    }
+
     try {
-      if (!form.date || !selectedVehicleId || !form.brass) {
-        alert("Please fill required fields");
-        return;
-      }
-
-      const formData = new FormData();
-
-      formData.append("bill_number", form.billNo);
-      formData.append("supplier", selectedSupplierId); // UUID
-      formData.append("village", selectedVillegeId);   // UUID
-      formData.append("vehicle", selectedVehicleId);   // UUID
-      formData.append("material", form.item); // UUID
-      formData.append("quantity", form.brass);
-      formData.append("amount", form.amount);
-      formData.append("mr", selectedMrId);
-      formData.append("is_active", true);              // UUID
-      // formData.append("bill_doc", form.billFile);// UUID
-
-      if (form.billFile) {
-        formData.append("bill_doc", form.billFile);        // FILE ✅
-      }
-
-      const res = await fetch("http://localhost:8000/api/purchase/create/", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
+      const res = await fetch(
+        "http://localhost:8000/api/purchase/create/",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (!res.ok) {
-        alert(JSON.stringify(data));
+        alert("Failed to save");
         return;
       }
 
       alert("Purchase Bill Saved Successfully");
       navigate(-1);
-
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       alert("Server error");
     }
   };
 
-
-  // const formData = new FormData();
-
-  // formData.append("bill_number", form.billNo);
-  // formData.append("supplier", selectedSupplierId); // UUID
-  // formData.append("village", selectedVillegeId);   // UUID
-  // formData.append("material", form.item); // UUID
-  // formData.append("quantity", form.brass);
-  // formData.append("amount", form.amount);
-  // formData.append("mr", selectedMrId);              // UUID
-  // formData.append("bill_doc", form.billFile);
+  /* ================= ERP LABEL STYLE ================= */
+  const labelStyle = {
+    width: 240,
+    minWidth: 240,
+    maxWidth: 240,
+    height: 56,
+    flex: "0 0 240px",
+    background: "linear-gradient(145deg, #e3f2fd, #bbdefb)",
+    border: "1px solid #90caf9",
+    borderRadius: 1,
+    px: 2,
+    fontWeight: 600,
+    fontSize: "0.9rem",
+    display: "flex",
+    alignItems: "center",
+  };
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        backgroundColor: "#f4f6f8",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        p: 2,
-      }}
-    >
+    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
       <Header />
-      <Paper
-        elevation={6}
-        sx={{
-          width: "100%",
-          maxWidth: 1000,
-          borderRadius: 3,
-          overflow: "hidden",
-          mt: 15
 
-        }}
-      >
-        {/* HEADER */}
-        <Box
+      <Box sx={{ flexGrow: 1, p: 3, mt: 4 }}>
+        <Card
           sx={{
-            backgroundColor: "#1e3a8a",
-            color: "#fff",
-            px: 3,
-            py: 2,
+            width: "98%",
+            mx: "auto",
+            minHeight: "80vh",
+            borderRadius: 3,
+            boxShadow: "0px 10px 30px rgba(0,0,0,0.15)",
             display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            flexDirection: "column",
           }}
         >
-          <Typography variant="h6" fontWeight={700}>
-            RAW MATERIAL ENTRY
-          </Typography>
-          <IconButton onClick={() => navigate(-1)}>
-            <CloseIcon sx={{ color: "#fff" }} />
-          </IconButton>
-        </Box>
-
-        {/* FORM */}
-        <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 2 }}>
-          {/* <TextField
-            label="Supplier Name"
-            required
-            select
-            value={selectedSupplierId}
-            onChange={(e) => setSelectedSupplierId(e.target.value)}
-          >
-            <MenuItem value="">Select Supplier</MenuItem>
-            {suppliers.map((s) => (
-              <MenuItem key={s.id} value={s.id}>
-                {s.name}
-              </MenuItem>
-            ))}
-          </TextField> */}
-
-          <TextField
-            label="Date"
-            type="date"
-            name="date"
-            value={form.date}
-            onChange={handleChange}
-            InputLabelProps={{ shrink: true }}
-            required
-          />
-
-          {/* <TextField
-            label="Bill No"
-            name="billNo"
-            value={form.billNo}
-            onChange={handleChange}
-            required
-          /> */}
-
-          {/* <TextField
-            label="Villege"
-            required
-            select
-            value={selectedVillegeId}
-            onChange={(e) => setSelectedVillegeId(e.target.value)}
-          >
-            <MenuItem value="">Select Villege</MenuItem>
-            {villages.map((s) => (
-              <MenuItem key={s.id} value={s.id}>
-                {s.name}
-              </MenuItem>
-            ))}
-          </TextField> */}
-
-          <TextField
-            select
-            fullWidth
-            label="Vehicle No"
-            value={selectedVehicleId}
-            onChange={(e) => {
-              const id = e.target.value;
-              const vehicle = vehicles.find(v => v.id === id);
-
-              setSelectedVehicleId(id);
-
-              setForm(prev => ({
-                ...prev,
-                vehicleNo: vehicle?.vehicle_number || "",
-              }));
-            }}
-            required
-          >
-            <MenuItem value="">
-              <em>Select Vehicle</em>
-            </MenuItem>
-
-            {vehicles.map((v) => (
-              <MenuItem key={v.id} value={v.id}>
-                {v.vehicle_number}
-              </MenuItem>
-            ))}
-          </TextField>
-
-
-          <TextField
-            label="Quantity"
-            name="brass"
-            value={form.brass}
-            onChange={handleChange}
-            type="number"
-            required
-          />
-
-          {/* <TextField
-            label="Amount"
-            name="amount"
-            value={form.amount}
-            onChange={handleChange}
-            type="number"
-            required
-          /> */}
-
-          {/* <TextField
-            label="Mr Name"
-            required
-            select
-            value={selectedMrId}
-            onChange={(e) => setSelectedMrId(e.target.value)}
-          >
-            <MenuItem value="">Select Mr</MenuItem>
-            {mrs.map((s) => (
-              <MenuItem key={s.id} value={s.id}>
-                {s.name}
-              </MenuItem>
-            ))}
-          </TextField> */}
-
-          <Button
-            variant="outlined"
-            component="label"
-            sx={{ width: 160, textTransform: "none" }}
-          >
-            Upload Bill
-            <input
-              hidden
-              type="file"
-              name="billFile"
-              accept=".pdf,image/*"
-              onChange={handleChange}
-            />
-          </Button>
-
-
-
-          {/* ACTIONS */}
+          {/* HEADER STRIP */}
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "flex-end",
-              gap: 2,
-              mt: 2,
+              px: 3,
+              py: 2,
+              background: "linear-gradient(90deg, #1a237e, #283593)",
             }}
           >
-            <Button
-              variant="contained"
-              sx={{ backgroundColor: "#2563eb" }}
-              onClick={handleSave}
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 600, textAlign: "center", color: "#fff" }}
             >
-              SAVE
-            </Button>
-            <Button variant="outlined" onClick={() => navigate(-1)}>
-              CLOSE
-            </Button>
+              RAW MATERIAL ENTRY
+            </Typography>
           </Box>
-        </Box>
-      </Paper>
+
+          <Divider />
+
+          <CardContent
+            sx={{
+              px: 8,
+              py: 6,
+              flexGrow: 1,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Box display="flex" flexDirection="column" gap={4}>
+
+              {/* DATE */}
+              <Box display="flex" alignItems="center" gap={3}>
+                <Box sx={labelStyle}>DATE *</Box>
+                <TextField
+                  type="date"
+                  name="date"
+                  value={form.date}
+                  onChange={handleChange}
+                  fullWidth
+                  sx={{ height: 56 }}
+                />
+              </Box>
+
+              {/* VEHICLE */}
+              <Box display="flex" alignItems="center" gap={3}>
+                <Box sx={labelStyle}>VEHICLE *</Box>
+                <TextField
+                  select
+                  value={selectedVehicleId}
+                  onChange={(e) => setSelectedVehicleId(e.target.value)}
+                  fullWidth
+                >
+                  <MenuItem value="">
+                    <em>Select Vehicle</em>
+                  </MenuItem>
+
+                  {vehicles.map((v) => (
+                    <MenuItem key={v.id} value={v.id}>
+                      {v.vehicle_number}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Box>
+
+              {/* QUANTITY */}
+              <Box display="flex" alignItems="center" gap={3}>
+                <Box sx={labelStyle}>BRASS *</Box>
+                <TextField
+                  name="brass"
+                  value={form.brass}
+                  onChange={handleChange}
+                  type="number"
+                  fullWidth
+                />
+              </Box>
+
+              {/* FILE */}
+              <Box display="flex" alignItems="center" gap={3}>
+                <Box sx={labelStyle}>BILL FILE</Box>
+                <Button variant="outlined" component="label">
+                  Upload Bill
+                  <input
+                    hidden
+                    type="file"
+                    name="billFile"
+                    accept=".pdf,image/*"
+                    onChange={handleChange}
+                  />
+                </Button>
+              </Box>
+
+              {form.billFile && (
+                <Typography variant="body2">
+                  Selected File: <b>{form.billFile.name}</b>
+                </Typography>
+              )}
+
+            </Box>
+
+            <Box sx={{ flexGrow: 1 }} />
+
+            {/* ACTION BUTTONS */}
+            <Box display="flex" justifyContent="flex-end" gap={2}>
+              <Button
+                variant="contained"
+                sx={{
+                  px: 6,
+                  backgroundColor: "#2962ff",
+                  "&:hover": { backgroundColor: "#0039cb" },
+                }}
+                onClick={handleSave}
+              >
+                SAVE
+              </Button>
+
+              <Button
+                variant="outlined"
+                sx={{ px: 6 }}
+                onClick={() => navigate(-1)}
+              >
+                CLOSE
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
     </Box>
   );
 }

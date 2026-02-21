@@ -18,6 +18,7 @@ function AddEmployee() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -29,11 +30,14 @@ function AddEmployee() {
       type: "WORKER",
       salary: "",
     });
+    setError("");
   };
 
   const handleSubmit = async () => {
+    setError("");
+
     if (!form.employeeName || !form.salary) {
-      alert("Please fill all required fields");
+      setError("Employee name and salary are required");
       return;
     }
 
@@ -44,9 +48,7 @@ function AddEmployee() {
         "http://localhost:8000/api/employees/create/",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             name: form.employeeName,
             type: form.type,
@@ -59,97 +61,136 @@ function AddEmployee() {
 
       if (!response.ok) {
         console.error("API Error:", data);
-        alert("Failed to add employee");
+        setError("Failed to add employee");
         return;
       }
 
-      alert("Employee added successfully✅");
+      alert("Employee added successfully ✅");
       handleReset();
     } catch (error) {
       console.error("Network Error:", error);
-      alert("Server error. Please try again.");
+      setError("Server error. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  /* 🔥 INDUSTRIAL FIXED LABEL STYLE */
+  const labelStyle = {
+    width: 240,
+    minWidth: 240,
+    maxWidth: 240,
+    flex: "0 0 240px",
+    height: 56, // match default TextField height
+    background: "linear-gradient(145deg, #e3f2fd, #bbdefb)",
+    border: "1px solid #90caf9",
+    borderRadius: 1,
+    px: 2,
+    fontWeight: 600,
+    fontSize: "0.9rem",
+    display: "flex",
+    alignItems: "center",
+  };
+
   return (
     <Card
       sx={{
-        maxWidth: 900,
+        width: "98%",
         mx: "auto",
+        minHeight: "80vh",
         borderRadius: 3,
         boxShadow: "0px 10px 30px rgba(0,0,0,0.2)",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      {/* Header */}
+      {/* HEADER */}
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
           px: 3,
           py: 2,
           background: "linear-gradient(90deg, #1a237e, #283593)",
         }}
       >
-        <Typography variant="h6"  fontWeight={600} color="#fff">
+        <Typography
+          variant="h6"
+          sx={{ color: "#fff", fontWeight: 600, textAlign: "center" }}
+        >
           ADD EMPLOYEE
         </Typography>
       </Box>
 
       <Divider />
 
-      {/* Form */}
-      <CardContent sx={{ px: 4, py: 3 }}>
-        <Box display="flex" flexDirection="column" gap={3}>
-          <TextField
-            label="Employee Name *"
-            name="employeeName"
-            value={form.employeeName}
-            onChange={handleChange}
-            fullWidth
-          />
+      <CardContent
+        sx={{
+          px: 8,
+          py: 6,
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <Box display="flex" flexDirection="column" gap={4}>
 
-          <TextField
-            select
-            label="Type *"
-            name="type"
-            value={form.type}
-            onChange={handleChange}
-            fullWidth
-          >
-            <MenuItem value="WORKER">WORKER</MenuItem>
-            <MenuItem value="MR">MR</MenuItem>
-          </TextField>
+          {/* EMPLOYEE NAME */}
+          <Box display="flex" alignItems="center" gap={2}>
+            <Box sx={labelStyle}>EMPLOYEE NAME *</Box>
+            <TextField
+              name="employeeName"
+              value={form.employeeName}
+              onChange={handleChange}
+              fullWidth
+            />
+          </Box>
 
-          <TextField
-            label="Salary *"
-            name="salary"
-            value={form.salary}
-            onChange={handleChange}
-            fullWidth
-          />
+          {/* TYPE */}
+          <Box display="flex" alignItems="center" gap={2}>
+            <Box sx={labelStyle}>TYPE *</Box>
+            <TextField
+              select
+              name="type"
+              value={form.type}
+              onChange={handleChange}
+              fullWidth
+            >
+              <MenuItem value="WORKER">WORKER</MenuItem>
+              <MenuItem value="MR">MR</MenuItem>
+            </TextField>
+          </Box>
+
+          {/* SALARY */}
+          <Box display="flex" alignItems="center" gap={2}>
+            <Box sx={labelStyle}>SALARY *</Box>
+            <TextField
+              name="salary"
+              value={form.salary}
+              onChange={handleChange}
+              fullWidth
+            />
+          </Box>
+
+          {/* ERROR */}
+          {error && (
+            <Typography color="error" fontSize={14}>
+              {error}
+            </Typography>
+          )}
         </Box>
 
-        {/* Action Buttons */}
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 2,
-            mt: 4,
-          }}
-        >
+        {/* PUSH BUTTONS DOWN */}
+        <Box sx={{ flexGrow: 1 }} />
+
+        <Box display="flex" justifyContent="flex-end" gap={2}>
           <Button
             variant="contained"
+            disabled={loading}
             sx={{
-              px: 4,
+              px: 6,
               backgroundColor: "#2962ff",
               "&:hover": { backgroundColor: "#0039cb" },
             }}
             onClick={handleSubmit}
-            disabled={loading}
           >
             {loading ? "Saving..." : "ADD >>"}
           </Button>
@@ -157,7 +198,7 @@ function AddEmployee() {
           <Button
             variant="contained"
             color="inherit"
-            sx={{ px: 4 }}
+            sx={{ px: 6 }}
             onClick={handleReset}
             disabled={loading}
           >

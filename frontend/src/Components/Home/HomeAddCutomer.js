@@ -7,32 +7,22 @@ import {
   TextField,
   Button,
   Divider,
-  Snackbar,
-  Alert,
 } from "@mui/material";
-import axios from "axios";
 import Header from "../Header/Header";
 import { useNavigate } from "react-router-dom";
 
-
 function HomeAddCutomer() {
-
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     customerName: "",
     address: "",
     phone: "",
     gstin: "",
-    // mrName: "",
   });
 
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -44,110 +34,135 @@ function HomeAddCutomer() {
       address: "",
       phone: "",
       gstin: "",
-    //   mrName: "",
     });
+    setError("");
   };
 
   const handleSubmit = async () => {
-  // Basic validation
-  if (!form.customerName || !form.phone || !form.address) {
-    setToast({
-      open: true,
-      message: "Please fill all required fields",
-      severity: "error",
-    });
-    return;
-  }
+    setError("");
 
-  try {
+    if (!form.customerName || !form.phone || !form.address) {
+      setError("Customer name, address, and phone are required");
+      return;
+    }
+
     setLoading(true);
 
-    const payload = {
-      name: form.customerName,
-      contact: form.phone,
-      address: form.address,
-      gstin: form.gstin || null,
-    //   mr_name: form.mrName,
-    };
+    try {
+      const response = await fetch(
+        "http://localhost:8000/api/customers/create/",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: form.customerName,
+            contact: form.phone,
+            address: form.address,
+            gstin: form.gstin || null,
+          }),
+        }
+      );
 
-    const res = await axios.post(
-      "http://localhost:8000/api/customers/create/",
-      payload
-    );
+      const data = await response.json();
 
-    setToast({
-      open: true,
-      message: res.data.message || "Customer created successfully",
-      severity: "success",
-    });
+      if (!response.ok) {
+        setError(
+          data?.errors
+            ? JSON.stringify(data.errors)
+            : "Failed to create customer"
+        );
+        setLoading(false);
+        return;
+      }
 
-    handleReset();
+      alert("Customer added successfully ✅");
+      navigate("/invoice-generation")
+    //   handleReset();
+    } catch (err) {
+      setError("Server error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // ✅ REDIRECT TO INVOICE PAGE AFTER SUCCESS
-    setTimeout(() => {
-      navigate("/invoice-generation");   // 🔁 change route if needed
-    }, 800);
-
-  } catch (error) {
-    console.error(error);
-
-    setToast({
-      open: true,
-      message:
-        error?.response?.data?.message ||
-        "Failed to create customer",
-      severity: "error",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  /* 🔥 FIXED LABEL BOX STYLE */
+  const labelStyle = {
+    width: 240,
+    minWidth: 240,
+    maxWidth: 240,
+    flex: "0 0 240px",
+    height: 56, // match TextField height
+    background: "linear-gradient(145deg, #e3f2fd, #bbdefb)",
+    border: "1px solid #90caf9",
+    borderRadius: 1,
+    px: 2,
+    fontWeight: 600,
+    fontSize: "0.9rem",
+    display: "flex",
+    alignItems: "center",
+  };
 
   return (
-    <Box sx={{ minHeight: "100vh", py: 4, backgroundColor: "#f5f5f5" }}>
-    <Header />
-      <Card
+    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+      <Header />
+
+      <Box sx={{ flexGrow: 1, p: 3, mt: 4 }}>
+    <Card
+      sx={{
+        width: "98%",
+        mx: "auto",
+        minHeight: "80vh",
+        borderRadius: 3,
+        boxShadow: "0px 10px 30px rgba(0,0,0,0.2)",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* HEADER */}
+      <Box
         sx={{
-          maxWidth: 900,
-          mx: "auto",
-          borderRadius: 3,
-          boxShadow: "0px 10px 30px rgba(0,0,0,0.2)",
+          px: 3,
+          py: 2,
+          background: "linear-gradient(90deg, #1a237e, #283593)",
         }}
       >
-        {/* Header */}
-        <Box
-          sx={{
-            px: 3,
-            py: 2,
-            borderTopLeftRadius: 12,
-            borderTopRightRadius: 12,
-            background: "linear-gradient(90deg, #1a237e, #283593)",
-          }}
+        <Typography
+          variant="h6"
+          sx={{ color: "#fff", fontWeight: 600, textAlign: "center" }}
         >
-          <Typography
-            variant="h6"
-            sx={{ color: "#fff", fontWeight: 600, textAlign: "center" }}
-          >
-            ADD CUSTOMER
-          </Typography>
-        </Box>
+          ADD CUSTOMER
+        </Typography>
+      </Box>
 
-        <Divider />
+      <Divider />
 
-        {/* Form */}
-        <CardContent sx={{ px: 4, py: 3 }}>
-          <Box display="flex" flexDirection="column" gap={3}>
+      <CardContent
+        sx={{
+          px: 8,
+          py: 6,
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {/* FORM */}
+        <Box display="flex" flexDirection="column" gap={4}>
+
+          {/* CUSTOMER NAME */}
+          <Box display="flex" alignItems="center" gap={2}>
+            <Box sx={labelStyle}>CUSTOMER NAME *</Box>
             <TextField
-              label="Customer Name *"
               name="customerName"
               value={form.customerName}
               onChange={handleChange}
               fullWidth
             />
+          </Box>
 
+          {/* ADDRESS */}
+          <Box display="flex" alignItems="center" gap={2}>
+            <Box sx={labelStyle}>ADDRESS *</Box>
             <TextField
-              label="Address *"
               name="address"
               value={form.address}
               onChange={handleChange}
@@ -155,80 +170,68 @@ function HomeAddCutomer() {
               multiline
               rows={2}
             />
+          </Box>
 
+          {/* PHONE */}
+          <Box display="flex" alignItems="center" gap={2}>
+            <Box sx={labelStyle}>PHONE NO *</Box>
             <TextField
-              label="Phone No *"
               name="phone"
               value={form.phone}
               onChange={handleChange}
               fullWidth
             />
+          </Box>
 
+          {/* GSTIN */}
+          <Box display="flex" alignItems="center" gap={2}>
+            <Box sx={labelStyle}>GSTIN</Box>
             <TextField
-              label="GSTIN"
               name="gstin"
               value={form.gstin}
               onChange={handleChange}
               fullWidth
             />
-
-            {/* <TextField
-              label="MR Name *"
-              name="mrName"
-              value={form.mrName}
-              onChange={handleChange}
-              fullWidth
-            /> */}
           </Box>
 
-          {/* Action Buttons */}
-          <Box
+          {/* ERROR */}
+          {error && (
+            <Typography color="error" fontSize={14}>
+              {error}
+            </Typography>
+          )}
+        </Box>
+
+        {/* PUSH BUTTONS DOWN */}
+        <Box sx={{ flexGrow: 1 }} />
+
+        {/* BUTTONS */}
+        <Box display="flex" justifyContent="flex-end" gap={2}>
+          <Button
+            variant="contained"
+            disabled={loading}
             sx={{
-              display: "flex",
-              justifyContent: "flex-end",
-              gap: 2,
-              mt: 4,
+              px: 6,
+              backgroundColor: "#2962ff",
+              "&:hover": { backgroundColor: "#0039cb" },
             }}
+            onClick={handleSubmit}
           >
-            <Button
-              variant="contained"
-              disabled={loading}
-              sx={{
-                px: 4,
-                backgroundColor: "#2962ff",
-                "&:hover": { backgroundColor: "#0039cb" },
-              }}
-              onClick={handleSubmit}
-            >
-              {loading ? "Saving..." : "ADD >>"}
-            </Button>
+            {loading ? "Saving..." : "ADD >>"}
+          </Button>
 
-            <Button
-              variant="contained"
-              color="inherit"
-              sx={{ px: 4 }}
-              onClick={handleReset}
-            >
-              RESET
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
-
-      {/* Toast */}
-      <Snackbar
-        open={toast.open}
-        autoHideDuration={3000}
-        onClose={() => setToast({ ...toast, open: false })}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Alert
-          severity={toast.severity}
-          onClose={() => setToast({ ...toast, open: false })}
-        >
-          {toast.message}
-        </Alert>
-      </Snackbar>
+          <Button
+            variant="contained"
+            color="inherit"
+            sx={{ px: 6 }}
+            onClick={handleReset}
+          >
+            RESET
+          </Button>
+        </Box>
+      </CardContent>
+    </Card>
+    </Box>
     </Box>
   );
 }

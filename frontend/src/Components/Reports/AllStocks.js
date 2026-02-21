@@ -147,116 +147,163 @@ function AllStocks() {
   };
 
   return (
-    <Box sx={{ p: 4, backgroundColor: "#fff", minHeight: "100vh" }}>
-      {/* ACTION BUTTONS */}
-      <Stack direction="row" spacing={2} justifyContent="flex-end" mb={2}>
-        <Button
-          variant="outlined"
-          onClick={handlePrint}
-          disabled={rows.length === 0}
-        >
-          Print
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleDownloadPDF}
-          disabled={rows.length === 0}
-        >
-          Download PDF
-        </Button>
-      </Stack>
+  <Box sx={{ width: "100%" }}>
 
-      {/* TITLE */}
+    {/* ACTION BUTTONS */}
+    <Stack
+      direction="row"
+      spacing={2}
+      justifyContent="flex-end"
+      mb={3}
+    >
+      <Button
+        size="small"
+        variant="outlined"
+        onClick={handlePrint}
+        disabled={rows.length === 0}
+        sx={{
+          fontWeight: 600,
+          borderColor: "#cbd5e1",
+          "&:hover": {
+            borderColor: "#94a3b8",
+            backgroundColor: "#f8fafc",
+          },
+        }}
+      >
+        PRINT
+      </Button>
+
+      <Button
+        size="small"
+        variant="contained"
+        onClick={handleDownloadPDF}
+        disabled={rows.length === 0}
+        sx={{
+          fontWeight: 600,
+          backgroundColor: "#1e40af",
+          "&:hover": { backgroundColor: "#1d4ed8" },
+        }}
+      >
+        DOWNLOAD PDF
+      </Button>
+    </Stack>
+
+    {/* INDUSTRY STANDARD PAGE HEADER */}
+    <Box
+      sx={{
+        mb: 3,
+        py: 2,
+        px: 3,
+        borderRadius: 2,
+        background: "linear-gradient(90deg, #1a237e, #283593)",
+        color: "#ffffff",
+        textAlign: "center",
+      }}
+    >
       <Typography
-        variant="h5"
-        fontWeight={800}
-        textAlign="center"
-        mb={3}
+        variant="h6"
+        fontWeight={700}
+        letterSpacing={1}
       >
         ALL STOCK REPORT
       </Typography>
+    </Box>
 
-      {/* LOADING */}
-      {loading && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>
-          <CircularProgress />
-        </Box>
-      )}
+    {/* LOADING */}
+    {loading && (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>
+        <CircularProgress />
+      </Box>
+    )}
 
-      {/* EMPTY STATE */}
-      {!loading && rows.length === 0 && (
-        <Typography textAlign="center" color="text.secondary">
-          No stock data available
-        </Typography>
-      )}
+    {/* EMPTY STATE */}
+    {!loading && rows.length === 0 && (
+      <Typography textAlign="center" color="text.secondary">
+        No stock data available
+      </Typography>
+    )}
 
-      {/* TABLE */}
-      {!loading && rows.length > 0 && (
-        <TableContainer
-          component={Paper}
-          elevation={0}
-          sx={{
-            maxWidth: 700,
-            mx: "auto",
-            border: "1px solid #000",
-          }}
-        >
-          <Table>
-            <TableHead>
-              <TableRow>
+    {/* TABLE */}
+    {!loading && rows.length > 0 && (
+      <TableContainer
+        component={Paper}
+        sx={{
+          width: "100%",
+          border: "1px solid #d1d5db",
+          borderRadius: 2,
+          overflow: "hidden",
+        }}
+      >
+        <Table size="small">
+
+          <TableHead>
+            <TableRow>
+              {["ITEM NAME", "TOTAL STOCK"].map((header, index, arr) => (
                 <TableCell
+                  key={header}
+                  align="center"
                   sx={{
                     fontWeight: 700,
-                    border: "1px solid #000",
-                    textAlign: "center",
+                    backgroundColor: "#f3f4f6",
+                    borderBottom: "1px solid #d1d5db",
+                    borderRight:
+                      index !== arr.length - 1
+                        ? "1px solid #e5e7eb"
+                        : "none",
                   }}
                 >
-                  Item Name
+                  {header}
                 </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {rows.map((row, index) => (
+              <TableRow
+                key={index}
+                sx={{
+                  "&:nth-of-type(even)": {
+                    backgroundColor: "#f9fafb",
+                  },
+                  "&:hover": {
+                    backgroundColor: "#eef2ff",
+                  },
+                }}
+              >
                 <TableCell
+                  align="center"
                   sx={{
-                    fontWeight: 700,
-                    border: "1px solid #000",
-                    textAlign: "center",
+                    borderBottom: "1px solid #e5e7eb",
+                    borderRight: "1px solid #e5e7eb",
                   }}
                 >
-                  Total Stock
+                  {row.item}
+                </TableCell>
+
+                <TableCell
+                  align="center"
+                  sx={{
+                    borderBottom: "1px solid #e5e7eb",
+                    fontWeight:
+                      Number(row.stock) < 0 ? 600 : 500,
+                    color:
+                      Number(row.stock) < 0
+                        ? "error.main"
+                        : "text.primary",
+                  }}
+                >
+                  {Number(row.stock).toFixed(2)}
                 </TableCell>
               </TableRow>
-            </TableHead>
+            ))}
+          </TableBody>
 
-            <TableBody>
-              {rows.map((row, index) => (
-                <TableRow key={index}>
-                  <TableCell
-                    sx={{
-                      border: "1px solid #000",
-                      textAlign: "center",
-                    }}
-                  >
-                    {row.item}
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      border: "1px solid #000",
-                      textAlign: "center",
-                      color:
-                        Number(row.stock) < 0
-                          ? "error.main"
-                          : "text.primary",
-                      fontWeight: Number(row.stock) < 0 ? 600 : 400,
-                    }}
-                  >
-                    {Number(row.stock).toFixed(2)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-    </Box>
-  );
+        </Table>
+      </TableContainer>
+    )}
+  </Box>
+);
 }
 
 export default AllStocks;

@@ -182,129 +182,212 @@ function FuelInVsOut() {
     window.open(doc.output("bloburl")).print();
   };
 
-  return (
-    <Box p={2}>
-      <Typography variant="h5" fontWeight={700} mb={2}>
-        Fuel In / Out
+return (
+  <Box sx={{ width: "100%" }}>
+
+    {/* ================= HEADER STRIP ================= */}
+    <Box
+      sx={{
+        mb: 3,
+        px: 3,
+        py: 2,
+        borderRadius: 2,
+        background: "linear-gradient(90deg, #1a237e, #283593)",
+        color: "#fff",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <Typography variant="h6" fontWeight={600}>
+        FUEL IN / OUT REPORT
       </Typography>
 
-      {/* FILTERS */}
-      <Card sx={{ p: 2, mb: 2 }}>
-        <Box display="flex" gap={2} flexWrap="wrap">
-          <TextField
-            label="Search"
-            size="small"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
+      <Box>
+        <IconButton onClick={handleDownload} sx={{ color: "#fff" }}>
+          <FileDownloadIcon />
+        </IconButton>
 
-          <TextField
-            select
-            label="Fuel Type"
-            size="small"
-            value={fuelType}
-            onChange={(e) => setFuelType(e.target.value)}
-            sx={{ minWidth: 140 }}
-          >
-            <MenuItem value="All">All</MenuItem>
-            <MenuItem value="Diesel">Diesel</MenuItem>
-            <MenuItem value="Adblue">Adblue</MenuItem>
-          </TextField>
+        <IconButton onClick={handlePrint} sx={{ color: "#fff" }}>
+          <PrintIcon />
+        </IconButton>
+      </Box>
+    </Box>
 
-          <TextField
-            type="date"
-            label="From Date"
-            size="small"
-            InputLabelProps={{ shrink: true }}
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-          />
+    {/* ================= FILTER SECTION ================= */}
+    <Card
+      sx={{
+        p: 3,
+        mb: 3,
+        borderRadius: 2,
+        boxShadow: "0px 4px 14px rgba(0,0,0,0.06)",
+      }}
+    >
+      <Box display="flex" gap={3} flexWrap="wrap">
 
-          <TextField
-            type="date"
-            label="To Date"
-            size="small"
-            InputLabelProps={{ shrink: true }}
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-          />
-        </Box>
-      </Card>
+        <TextField
+          label="SEARCH"
+          size="small"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ minWidth: 240 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+        />
 
-      {/* SUMMARY */}
-      <Card sx={{ p: 2, mb: 3, maxWidth: 480 }}>
-        <Typography>Total Fuel</Typography>
-        <Typography variant="h5">{totalFuel} Liters</Typography>
-        <Typography variant="body2" mt={1}>
-          Amount: ₹ {totalAmount}
-        </Typography>
-      </Card>
+        <TextField
+          select
+          label="FUEL TYPE"
+          size="small"
+          value={fuelType}
+          onChange={(e) => setFuelType(e.target.value)}
+        >
+          <MenuItem value="All">All</MenuItem>
+          <MenuItem value="Diesel">Diesel</MenuItem>
+          <MenuItem value="Adblue">Adblue</MenuItem>
+        </TextField>
 
-      {/* TABLE */}
-      <Card sx={{ p: 2 }}>
-        <Box display="flex" justifyContent="space-between" mb={1}>
-          <Typography variant="h6">Fuel Records</Typography>
-          <Box>
-            <IconButton onClick={handleDownload}>
-              <FileDownloadIcon />
-            </IconButton>
-            <IconButton onClick={handlePrint}>
-              <PrintIcon />
-            </IconButton>
-          </Box>
-        </Box>
+        <TextField
+          label="FROM"
+          type="date"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+        />
 
-        <Divider sx={{ mb: 1 }} />
+        <TextField
+          label="TO"
+          type="date"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+        />
 
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                {[
-                  "Vehicle No",
-                  "Fuel Type",
-                  "Initial Fuel",
-                  "Fuel In",
-                  "Total Fuel",
-                  "Fuel Out",
-                ].map((h) => (
-                  <TableCell key={h}><b>{h}</b></TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
+      </Box>
+    </Card>
 
-            <TableBody>
-              {filteredRows.map((r, i) => (
-                <TableRow key={i}>
-                  <TableCell>{r.vehicleNo}</TableCell>
-                  <TableCell>{r.fuelType}</TableCell>
-                  <TableCell>{r.initialFuel}</TableCell>
-                  <TableCell>{r.fuelIn}</TableCell>
-                  <TableCell>{r.totalFuel}</TableCell>
-                  <TableCell>{r.fuelOut}</TableCell>
-                </TableRow>
+    {/* ================= SUMMARY ================= */}
+    <Card sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+      <Typography variant="caption" fontWeight={600} color="text.secondary">
+        TOTAL FUEL
+      </Typography>
+
+      <Typography variant="h6" fontWeight={700} color="success.main">
+        {Number(totalFuel || 0).toLocaleString("en-IN")} Liters
+      </Typography>
+
+      <Typography variant="body2" mt={1}>
+        Total Amount: ₹ {Number(totalAmount || 0).toLocaleString("en-IN")}
+      </Typography>
+    </Card>
+
+    {/* ================= TABLE ================= */}
+    <Card sx={{ borderRadius: 2 }}>
+      <TableContainer>
+        <Table size="small">
+
+          <TableHead>
+            <TableRow>
+              {[
+                "VEHICLE NO",
+                "FUEL TYPE",
+                "INITIAL FUEL",
+                "FUEL IN",
+                "TOTAL FUEL",
+                "FUEL OUT",
+              ].map((header, index, arr) => (
+                <TableCell
+                  key={header}
+                  align="center"
+                  sx={{
+                    fontWeight: 700,
+                    backgroundColor: "#f1f5f9",
+                    borderRight:
+                      index !== arr.length - 1
+                        ? "1px solid #e5e7eb"
+                        : "none",
+                  }}
+                >
+                  {header}
+                </TableCell>
               ))}
+            </TableRow>
+          </TableHead>
 
-              {!loading && filteredRows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    No data found
+          <TableBody>
+            {filteredRows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} align="center">
+                  No data found
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredRows.map((r, i) => (
+                <TableRow
+                  key={i}
+                  hover
+                  sx={{
+                    "&:nth-of-type(even)": {
+                      backgroundColor: "#f9fafb",
+                    },
+                  }}
+                >
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {r.vehicleNo || ""}
+                  </TableCell>
+
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {r.fuelType || ""}
+                  </TableCell>
+
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {r.initialFuel || 0}
+                  </TableCell>
+
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {r.fuelIn || 0}
+                  </TableCell>
+
+                  <TableCell
+                    align="center"
+                    sx={{ borderRight: "1px solid #e5e7eb" }}
+                  >
+                    {r.totalFuel || 0}
+                  </TableCell>
+
+                  <TableCell align="center">
+                    {r.fuelOut || 0}
                   </TableCell>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Card>
-    </Box>
-  );
+              ))
+            )}
+          </TableBody>
+
+        </Table>
+      </TableContainer>
+    </Card>
+
+  </Box>
+);
 }
 
 export default FuelInVsOut;
