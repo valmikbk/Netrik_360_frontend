@@ -30,7 +30,7 @@ import AddVillage from "./Components/Home/AddVillage";
 
 function App() {
   return (
-    <Router>
+    // <Router>
       <Routes>
         {/* 🔓 LOGIN */}
         <Route path="/login" element={<Login />} />
@@ -69,7 +69,7 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/add-village" element={<ProtectedRoute><AddVillage /></ProtectedRoute>} />
       </Routes>
-    </Router>
+    // </Router>
   );
 }
 
